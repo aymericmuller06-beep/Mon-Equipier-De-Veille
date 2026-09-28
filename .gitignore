@@ -1,0 +1,10 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Base de données (pour ne pas pousser tes données de test sur GitHub)
+*.db
+
+# VS Code
+.vscode/
