@@ -16,7 +16,7 @@ Application de surveillance et de veille, containerisée avec Docker.
 3. Lancez l'application :
 
 ```bash
-docker-compose up -d
+docker compose up --build -d
 ```
 
 L'application sera accessible à `http://localhost:8000`
@@ -53,16 +53,16 @@ Assurez-vous que le fichier `requirements.txt` contient les dépendances nécess
 
 ```bash
 # Démarrer l'application
-docker-compose up -d
+docker compose up -d
 
 # Arrêter l'application
-docker-compose down
+docker compose down
 
 # Voir les logs
-docker-compose logs -f web
+docker compose logs -f web
 
 # Redémarrer le service
-docker-compose restart web
+docker compose restart web
 ```
 
 ## Structure du projet
