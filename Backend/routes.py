@@ -1,10 +1,39 @@
 import sqlite3
 import logging
+from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
 
 logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
+
+# ==================== FONCTIONS DE VALIDATION ====================
+
+def validate_url(url):
+    """Valide qu'une URL est bien formée (http ou https)"""
+    try:
+        result = urlparse(url)
+        # Vérifier qu'elle a un scheme (http/https) ET un domaine
+        is_valid = all([result.scheme in ['http', 'https'], result.netloc])
+        return is_valid
+    except:
+        return False
+
+def validate_length(value, min_len=1, max_len=255):
+    """Valide que la longueur d'une chaîne est entre min et max"""
+    if not isinstance(value, str):
+        return False
+    return min_len <= len(value) <= max_len
+
+def id_exists(table, id_value):
+    """Vérifie qu'une ID existe dans une table"""
+    try:
+        db = get_db()
+        cursor = db.execute(f"SELECT id FROM {table} WHERE id = ?", (id_value,))
+        return cursor.fetchone() is not None
+    except:
+        return False
+
 
 @api.route("/")
 def read_root():
