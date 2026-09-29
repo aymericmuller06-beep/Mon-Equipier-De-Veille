@@ -1,143 +1,78 @@
-# Équipier de Veille
+# Equipier de Veille
 
-Application de surveillance et de veille, avec architecture séparant Frontend et Backend.
+Projet de gestion de sources, thèmes et articles.
 
-## 🚀 Démarrage rapide
+## Structure du projet
 
-### Prérequis
-- Docker
-- Docker Compose
+```
+.
+├── Backend/              # API Flask
+│   ├── main.py          # Application principale
+│   ├── routes.py        # Endpoints API
+│   ├── database.py       # Configuration SQLite
+│   ├── Dockerfile       # Build backend
+│   ├── requirements.txt  # Dépendances Python
+│   └── README.md        # Documentation API
+├── Frontend/            # Application frontend
+├── Data/               # Données
+├── data/               # Volume SQLite
+├── docker-compose.yml   # Configuration services
+└── README.md           # Ce fichier
+```
 
-### Installation et lancement
+## Démarrage
 
+### Avec Docker Compose
 ```bash
-# 1. Cloner le projet
-git clone <repo>
-cd Equipier_de_Veille
-
-# 2. Initialiser le Frontend React
-cd Frontend
-npm create vite@latest . -- --template react
-npm install
-cd ..
-
-# 3. Démarrer l'application complète
 docker compose up --build -d
-
-# 4. Accéder à l'application
-# - Frontend: http://localhost:3000
-# - Backend API: http://localhost:8000
 ```
 
----
+Backend accessible sur `http://localhost:8000`
 
-## 📁 Structure du projet
-
-```
-Equipier_de_Veille/
-├── Backend/                    # API Flask + SQLite
-│   ├── main.py
-│   ├── routes.py
-│   ├── database.py
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── README.md              # Documentation Backend
-├── Frontend/                   # Application React
-│   ├── src/
-│   ├── package.json
-│   ├── Dockerfile
-│   └── README.md              # Documentation Frontend
-├── data/                       # Données persistantes (SQLite)
-├── docker-compose.yml          # Configuration services
-├── README.md                   # Ce fichier
-└── .gitignore
-```
-
----
-
-## 🏗️ Architecture
-
-### Services Docker
-
-| Service | Port | Description |
-|---------|------|-------------|
-| **backend** | 8000 | API Flask avec SQLite |
-| **frontend** | 3000 | Application web (React/Vue/Svelte) |
-
-### Communication
-
-```
-Frontend (React, port 3000)
-    ↓ HTTP/REST
-Backend API (Flask, port 8000)
-    ↓ SQL
-SQLite (./data)
-```
-
----
-
-## 📚 Documentation
-
-- **[Backend](./Backend/README.md)** - API endpoints, configuration, déploiement
-- **[Frontend](./Frontend/README.md)** - Setup, build, structure du projet
-
----
-
-## 🔧 Commandes utiles
-
+### Backend uniquement (local)
 ```bash
-# Démarrer les services
-docker compose up --build -d
-
-# Voir les logs en direct
-docker compose logs -f
-
-# Logs d'un service spécifique
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# Arrêter les services
-docker compose down
-
-# Redémarrer après changements backend
-docker compose up --build -d
-
-# Accéder au shell du backend
-docker compose exec backend /bin/bash
+cd Backend
+pip install -r requirements.txt
+python main.py
 ```
 
----
+## API Backend
 
-## 💾 Données persistantes
+Endpoints API pour thèmes, sources, articles et tags.
 
-Les données SQLite sont stockées dans `./data/` en volume Docker. Elles persisten même après l'arrêt des conteneurs.
+Voir [Backend/README.md](Backend/README.md) pour la documentation complète.
 
-Pour réinitialiser la base:
-```bash
-rm -rf ./data
-docker compose up --build -d
-```
+Validation:
+- URLs: format http/https valide
+- Textes: longueurs min/max selon ressource  
+- Relations: existence des IDs
 
----
+## Base de données
 
-## 🐛 Troubleshooting
+SQLite automatiquement initialisée. Fichier: `data/veille.db`
 
-| Problème | Solution |
-|----------|----------|
-| Port 3000/8000 déjà utilisé | Modifier les ports dans `docker-compose.yml` |
-| Changements backend pas appliqués | Utiliser `docker compose up --build -d` |
-| Frontend ne se connecte pas au backend | Vérifier que `VITE_API_URL` pointe sur `http://localhost:8000` |
-| Erreur de permissions sur ./data | Le dossier est créé automatiquement, vérifier les droits |
+Schéma:
+- `themes` - Thèmes de veille
+- `sources` - Sources d'information
+- `articles` - Articles collectés
+- `tags` - Tags pour classification
+- `article_tags` - Relation many-to-many
 
----
+Contraintes:
+- Clés étrangères activées
+- Cascade delete sur suppressions
 
-## 📝 Notes de développement
+## Services
 
-- **Backend**: Flask + SQLite avec validation des données
-- **Frontend**: React 18+ avec Vite
-- **Logging**: Les erreurs sont loggées côté backend, messages simplifiés pour le client
-- **Validation**: URLs, longueurs min/max, existence des références
+| Service | Port | Build |
+|---------|------|-------|
+| backend | 8000 | ./Backend |
+| frontend | 3000 | ./Frontend |
 
----
+## Frontend
 
-*Mise à jour: 29/09/2026*
+Dossier Frontend/ prêt pour l'application frontend.
+
+Configuration pour communiquer avec le backend sur `http://localhost:8000`:
+- Variable d'environnement `REACT_APP_API_URL`
+- CORS géré côté backend
