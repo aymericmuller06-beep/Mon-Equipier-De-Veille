@@ -1,146 +1,143 @@
 # Équipier de Veille
 
-Application de surveillance et de veille, containerisée avec Docker.
+Application de surveillance et de veille, avec architecture séparant Frontend et Backend.
 
-## Prérequis
+## 🚀 Démarrage rapide
 
+### Prérequis
 - Docker
 - Docker Compose
 
-## Installation et démarrage
-
-### Avec Docker Compose
-
-1. Clonez ou téléchargez le projet
-2. Placez-vous dans le répertoire du projet
-3. Lancez l'application (en cas de changements back, utiliser `--build`) :
+### Installation et lancement
 
 ```bash
-docker compose up --build -d
-```
+# 1. Cloner le projet
+git clone <repo>
+cd Equipier_de_Veille
 
-L'application sera accessible à `http://localhost:8000`
+# 2. Initialiser le Frontend React
+cd Frontend
+npm create vite@latest . -- --template react
+npm install
+cd ..
 
-## Architecture
-
-### Stack Technologique
-
-- **Framework** : Flask (Python)
-- **Base de données** : SQLite
-- **Containerisation** : Docker + Docker Compose
-
-### Docker Compose
-
-- **Service web** : Application Python Flask
-  - Port : `8000:8000`
-  - Container : `equipier_veille_app`
-  - Redémarrage automatique si arrêt inattendu
-
-### Volumes
-
-- `./data:/app/data` : Dossier partagé pour la persistence des données (base de données SQLite)
-
-## Configuration
-
-### Dockerfile
-
-- **Image de base** : Python 3.14-slim
-- **Framework** : Flask
-- **Base de données** : SQLite (built-in Python)
-- **Dépendances** : Installées depuis `requirements.txt`
-
-### Fichier requirements.txt
-
-Contient les dépendances Python nécessaires :
-- `flask>=3.1.3` : Framework web
-
-## Commandes utiles
-
-```bash
-# Démarrer l'application (avec rebuild si changements)
+# 3. Démarrer l'application complète
 docker compose up --build -d
 
-# Démarrer l'application (sans rebuild)
-docker compose up -d
-
-# Arrêter l'application
-docker compose down
-
-# Voir les logs en direct
-docker compose logs -f web
-
-# Redémarrer le service
-docker compose restart web
+# 4. Accéder à l'application
+# - Frontend: http://localhost:3000
+# - Backend API: http://localhost:8000
 ```
-
-## Structure du projet
-
-```
-.
-├── dockerfile              # Configuration Docker
-├── docker-compose.yml      # Configuration Docker Compose
-├── requirements.txt        # Dépendances Python
-├── README.md              # Ce fichier
-├── Backend/
-│   ├── main.py            # Point d'entrée de l'application Flask
-│   ├── routes.py          # Endpoints API (CRUD pour themes, sources, articles, tags)
-│   └── database.py        # Initialisation et gestion de la base SQLite
-├── Frontend/              # À documenter
-├── Data/                  # À documenter
-├── Archives/              # Anciens fichiers
-└── data/                  # Dossier pour les données persistantes (créé au démarrage)
-```
-
-## API Endpoints
-
-### Themes
-- `GET /themes` - Récupérer tous les thèmes
-- `POST /themes` - Créer un thème
-- `PUT /themes/<id>` - Modifier un thème
-- `DELETE /themes/<id>` - Supprimer un thème
-
-### Sources
-- `GET /sources` - Récupérer toutes les sources
-- `POST /sources` - Créer une source
-- `PUT /sources/<id>` - Modifier une source
-- `DELETE /sources/<id>` - Supprimer une source
-
-### Articles
-- `GET /articles` - Récupérer tous les articles
-- `POST /articles` - Créer un article
-- `PUT /articles/<id>` - Modifier un article
-- `DELETE /articles/<id>` - Supprimer un article
-- `GET /articles/<id>/tags` - Récupérer les tags d'un article
-- `POST /articles/<id>/tags` - Ajouter un tag à un article
-- `DELETE /articles/<id>/tags/<tag_id>` - Retirer un tag d'un article
-
-### Tags
-- `GET /tags` - Récupérer tous les tags
-- `POST /tags` - Créer un tag
-- `PUT /tags/<id>` - Modifier un tag
-- `DELETE /tags/<id>` - Supprimer un tag
-
-### Santé
-- `GET /` - Vérifier que le serveur est opérationnel
-
-## Données persistantes
-
-Les données SQLite sont stockées dans le dossier `./data` monté dans le conteneur. Cela garantit que les données ne sont pas perdues lors de l'arrêt ou du redémarrage du conteneur.
-
-### Tables de la base de données
-
-- `themes` : Catégories de surveillance
-- `sources` : Sources d'information (URLs)
-- `articles` : Articles récupérés
-- `tags` : Étiquettes pour classifier les articles
-- `article_tags` : Relation many-to-many entre articles et tags
-
-## Troubleshooting
-
-- **Le port 8000 est déjà utilisé** : Modifiez le mapping des ports dans `docker-compose.yml` (ex: `"8001:8000"`)
-- **Erreur de permissions sur ./data** : Le dossier est créé automatiquement au démarrage avec les bonnes permissions
-- **Les changements du backend ne sont pas appliqués** : Utilisez `docker compose up --build -d` pour rebuilder l'image
 
 ---
 
-*Mise à jour : 29/09/2026*
+## 📁 Structure du projet
+
+```
+Equipier_de_Veille/
+├── Backend/                    # API Flask + SQLite
+│   ├── main.py
+│   ├── routes.py
+│   ├── database.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── README.md              # Documentation Backend
+├── Frontend/                   # Application React
+│   ├── src/
+│   ├── package.json
+│   ├── Dockerfile
+│   └── README.md              # Documentation Frontend
+├── data/                       # Données persistantes (SQLite)
+├── docker-compose.yml          # Configuration services
+├── README.md                   # Ce fichier
+└── .gitignore
+```
+
+---
+
+## 🏗️ Architecture
+
+### Services Docker
+
+| Service | Port | Description |
+|---------|------|-------------|
+| **backend** | 8000 | API Flask avec SQLite |
+| **frontend** | 3000 | Application web (React/Vue/Svelte) |
+
+### Communication
+
+```
+Frontend (React, port 3000)
+    ↓ HTTP/REST
+Backend API (Flask, port 8000)
+    ↓ SQL
+SQLite (./data)
+```
+
+---
+
+## 📚 Documentation
+
+- **[Backend](./Backend/README.md)** - API endpoints, configuration, déploiement
+- **[Frontend](./Frontend/README.md)** - Setup, build, structure du projet
+
+---
+
+## 🔧 Commandes utiles
+
+```bash
+# Démarrer les services
+docker compose up --build -d
+
+# Voir les logs en direct
+docker compose logs -f
+
+# Logs d'un service spécifique
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Arrêter les services
+docker compose down
+
+# Redémarrer après changements backend
+docker compose up --build -d
+
+# Accéder au shell du backend
+docker compose exec backend /bin/bash
+```
+
+---
+
+## 💾 Données persistantes
+
+Les données SQLite sont stockées dans `./data/` en volume Docker. Elles persisten même après l'arrêt des conteneurs.
+
+Pour réinitialiser la base:
+```bash
+rm -rf ./data
+docker compose up --build -d
+```
+
+---
+
+## 🐛 Troubleshooting
+
+| Problème | Solution |
+|----------|----------|
+| Port 3000/8000 déjà utilisé | Modifier les ports dans `docker-compose.yml` |
+| Changements backend pas appliqués | Utiliser `docker compose up --build -d` |
+| Frontend ne se connecte pas au backend | Vérifier que `VITE_API_URL` pointe sur `http://localhost:8000` |
+| Erreur de permissions sur ./data | Le dossier est créé automatiquement, vérifier les droits |
+
+---
+
+## 📝 Notes de développement
+
+- **Backend**: Flask + SQLite avec validation des données
+- **Frontend**: React 18+ avec Vite
+- **Logging**: Les erreurs sont loggées côté backend, messages simplifiés pour le client
+- **Validation**: URLs, longueurs min/max, existence des références
+
+---
+
+*Mise à jour: 29/09/2026*

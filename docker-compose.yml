@@ -1,10 +1,22 @@
 services:
-  web:
-    build: .
-    container_name: equipier_veille_app
+  backend:
+    build: ./Backend
+    container_name: equipier_veille_backend
     ports:
       - "8000:8000"
     volumes:
-      # Permet de lier le fichier SQLite local pour ne pas perdre les données si le conteneur s'arrête
       - ./data:/app/data
     restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+
+  frontend:
+    build: ./Frontend
+    container_name: equipier_veille_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    restart: unless-stopped
+    depends_on:
+      - backend
