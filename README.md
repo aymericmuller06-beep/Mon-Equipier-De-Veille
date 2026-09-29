@@ -25,7 +25,7 @@ L'application sera accessible à `http://localhost:8000`
 
 ### Docker Compose
 
-- **Service web** : Application Python FastAPI/Uvicorn
+- **Service web** : Application Python Flask
   - Port : `8000:8000`
   - Container : `equipier_veille_app`
   - Redémarrage automatique si arrêt inattendu
@@ -39,7 +39,7 @@ L'application sera accessible à `http://localhost:8000`
 ### Dockerfile
 
 - **Image de base** : Python 3.14-slim
-- **Runtime** : Uvicorn (FastAPI)
+- **Runtime** : flask
 - **Dépendances** : Installées depuis `requirements.txt`
 
 ### Fichier requirements.txt
