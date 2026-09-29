@@ -1,8 +1,18 @@
 from flask import Flask
+from flask_cors import CORS
 from database import init_db, close_connection
 from routes import api
+import logging
 
 app = Flask(__name__)
+CORS(app)  # Activer CORS pour toutes les routes
+
+# Configure le logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Enregistrement des routes et de la fermeture de connexion
 app.register_blueprint(api)
