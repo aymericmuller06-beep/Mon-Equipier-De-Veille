@@ -1,8 +1,0 @@
-# Frontend - Placer ton application React/Vue/Svelte ici
-#
-# Pour démarrer un nouveau projet:
-# - React: npm create vite@latest . -- --template react
-# - Vue: npm create vite@latest . -- --template vue
-# - Svelte: npm create vite@latest . -- --template svelte
-#
-# Ensuite, démarrer avec: docker compose up --build -d
