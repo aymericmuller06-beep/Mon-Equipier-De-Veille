@@ -55,6 +55,9 @@ def add_theme():
     if not data or "name" not in data:
         logger.warning("Tentative de créer un thème sans le champ 'name'")
         return jsonify({"error": "Le champ 'name' est requis"}), 400
+    if not validate_length(data["name"], min_len=1, max_len=100):
+        logger.warning(f"Nom de thème invalide (longueur): '{data['name']}'")
+        return jsonify({"error": "Le nom doit avoir entre 1 et 100 caractères"}), 400
     db = get_db()
     try:
         cursor = db.execute("INSERT INTO themes (name) VALUES (?)", (data["name"],))
@@ -71,6 +74,9 @@ def update_theme(theme_id):
     if not data or "name" not in data:
         logger.warning(f"Tentative de modifier le thème {theme_id} sans le champ 'name'")
         return jsonify({"error": "Le champ 'name' est requis"}), 400
+    if not validate_length(data["name"], min_len=1, max_len=100):
+        logger.warning(f"Nom de thème invalide (longueur) lors de modification: '{data['name']}'")
+        return jsonify({"error": "Le nom doit avoir entre 1 et 100 caractères"}), 400
     db = get_db()
     try:
         cursor = db.execute("UPDATE themes SET name = ? WHERE id = ?", (data["name"], theme_id))
@@ -108,6 +114,15 @@ def add_source():
     if not data or not all(k in data for k in ("name", "url", "theme_id")):
         logger.warning("Tentative de créer une source avec champs manquants")
         return jsonify({"error": "Les champs 'name', 'url' et 'theme_id' sont requis"}), 400
+    if not validate_length(data["name"], min_len=1, max_len=150):
+        logger.warning(f"Nom de source invalide (longueur): '{data['name']}'")
+        return jsonify({"error": "Le nom doit avoir entre 1 et 150 caractères"}), 400
+    if not validate_url(data["url"]):
+        logger.warning(f"URL invalide rejetée: '{data['url']}'")
+        return jsonify({"error": "URL invalide. Format attendu: https://example.com"}), 400
+    if not id_exists("themes", data["theme_id"]):
+        logger.warning(f"Tentative créer source avec theme_id inexistant: {data['theme_id']}")
+        return jsonify({"error": "Thème inexistant"}), 404
     db = get_db()
     try:
         cursor = db.execute(
@@ -123,8 +138,8 @@ def add_source():
             "theme_id": data["theme_id"]
         }), 201
     except sqlite3.IntegrityError as e:
-        logger.warning(f"✗ Erreur création source '{data['name']}': theme_id {data['theme_id']} invalide - {str(e)}")
-        return jsonify({"error": "Thème invalide ou source en doublon"}), 400
+        logger.warning(f"✗ Erreur création source '{data['name']}': {str(e)}")
+        return jsonify({"error": "Source en doublon"}), 400
 
 @api.route("/sources/<int:source_id>", methods=["PUT"])
 def update_source(source_id):
@@ -132,6 +147,15 @@ def update_source(source_id):
     if not data or not all(k in data for k in ("name", "url", "theme_id")):
         logger.warning(f"Tentative de modifier la source {source_id} avec champs manquants")
         return jsonify({"error": "Les champs 'name', 'url' et 'theme_id' sont requis"}), 400
+    if not validate_length(data["name"], min_len=1, max_len=150):
+        logger.warning(f"Nom de source invalide (longueur) lors de modification: '{data['name']}'")
+        return jsonify({"error": "Le nom doit avoir entre 1 et 150 caractères"}), 400
+    if not validate_url(data["url"]):
+        logger.warning(f"URL invalide rejetée lors de modification: '{data['url']}'")
+        return jsonify({"error": "URL invalide. Format attendu: https://example.com"}), 400
+    if not id_exists("themes", data["theme_id"]):
+        logger.warning(f"Tentative modifier source {source_id} avec theme_id inexistant: {data['theme_id']}")
+        return jsonify({"error": "Thème inexistant"}), 404
     db = get_db()
     try:
         cursor = db.execute(
@@ -146,7 +170,7 @@ def update_source(source_id):
         return jsonify({"id": source_id, "name": data["name"], "url": data["url"], "theme_id": data["theme_id"]}), 200
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur modification source {source_id}: {str(e)}")
-        return jsonify({"error": "Thème invalide ou source en doublon"}), 400
+        return jsonify({"error": "Source en doublon"}), 400
 
 @api.route("/sources/<int:source_id>", methods=["DELETE"])
 def delete_source(source_id):
@@ -172,6 +196,15 @@ def add_article():
     if not data or not all(k in data for k in ("title", "url", "source_id")):
         logger.warning("Tentative de créer un article avec champs manquants")
         return jsonify({"error": "Les champs 'title', 'url' et 'source_id' sont requis"}), 400
+    if not validate_length(data["title"], min_len=1, max_len=300):
+        logger.warning(f"Titre d'article invalide (longueur): '{data['title']}'")
+        return jsonify({"error": "Le titre doit avoir entre 1 et 300 caractères"}), 400
+    if not validate_url(data["url"]):
+        logger.warning(f"URL article invalide rejetée: '{data['url']}'")
+        return jsonify({"error": "URL invalide. Format attendu: https://example.com"}), 400
+    if not id_exists("sources", data["source_id"]):
+        logger.warning(f"Tentative créer article avec source_id inexistant: {data['source_id']}")
+        return jsonify({"error": "Source inexistante"}), 404
     db = get_db()
     try:
         cursor = db.execute(
@@ -188,8 +221,8 @@ def add_article():
             "source_id": data["source_id"]
         }), 201
     except sqlite3.IntegrityError as e:
-        logger.warning(f"✗ Erreur création article: source_id {data['source_id']} invalide - {str(e)}")
-        return jsonify({"error": "Source invalide"}), 400
+        logger.warning(f"✗ Erreur création article: {str(e)}")
+        return jsonify({"error": "Article en doublon"}), 400
 
 @api.route("/articles/<int:article_id>", methods=["PUT"])
 def update_article(article_id):
@@ -197,6 +230,15 @@ def update_article(article_id):
     if not data or not all(k in data for k in ("title", "url", "source_id")):
         logger.warning(f"Tentative de modifier l'article {article_id} avec champs manquants")
         return jsonify({"error": "Les champs 'title', 'url' et 'source_id' sont requis"}), 400
+    if not validate_length(data["title"], min_len=1, max_len=300):
+        logger.warning(f"Titre d'article invalide (longueur) lors de modification: '{data['title']}'")
+        return jsonify({"error": "Le titre doit avoir entre 1 et 300 caractères"}), 400
+    if not validate_url(data["url"]):
+        logger.warning(f"URL article invalide rejetée lors de modification: '{data['url']}'")
+        return jsonify({"error": "URL invalide. Format attendu: https://example.com"}), 400
+    if not id_exists("sources", data["source_id"]):
+        logger.warning(f"Tentative modifier article {article_id} avec source_id inexistant: {data['source_id']}")
+        return jsonify({"error": "Source inexistante"}), 404
     db = get_db()
     try:
         cursor = db.execute(
@@ -211,7 +253,7 @@ def update_article(article_id):
         return jsonify({"id": article_id, "title": data["title"], "url": data["url"], "published_at": data.get("published_at"), "source_id": data["source_id"]}), 200
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur modification article {article_id}: {str(e)}")
-        return jsonify({"error": "Source invalide"}), 400
+        return jsonify({"error": "Article en doublon"}), 400
 
 @api.route("/articles/<int:article_id>", methods=["DELETE"])
 def delete_article(article_id):
@@ -243,6 +285,13 @@ def add_tag_to_article(article_id):
         return jsonify({"error": "Le champ 'tag_id' est requis"}), 400
     
     tag_id = data["tag_id"]
+    if not id_exists("articles", article_id):
+        logger.warning(f"Tentative ajouter tag à article inexistant: {article_id}")
+        return jsonify({"error": "Article inexistant"}), 404
+    if not id_exists("tags", tag_id):
+        logger.warning(f"Tentative ajouter tag inexistant {tag_id} à article {article_id}")
+        return jsonify({"error": "Tag inexistant"}), 404
+    
     db = get_db()
     try:
         db.execute("INSERT INTO article_tags (article_id, tag_id) VALUES (?, ?)", (article_id, tag_id))
@@ -251,7 +300,7 @@ def add_tag_to_article(article_id):
         return jsonify({"message": f"Tag {tag_id} associé à l'article {article_id}"}), 201
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur association article {article_id} et tag {tag_id}: {str(e)}")
-        return jsonify({"error": "Association impossible (article/tag inexistant ou doublon)"}), 400
+        return jsonify({"error": "Association déjà existante"}), 409
 
 @api.route("/articles/<int:article_id>/tags/<int:tag_id>", methods=["DELETE"])
 def remove_tag_from_article(article_id, tag_id):
@@ -277,6 +326,9 @@ def add_tag():
     if not data or "name" not in data:
         logger.warning("Tentative de créer un tag sans le champ 'name'")
         return jsonify({"error": "Le champ 'name' est requis"}), 400
+    if not validate_length(data["name"], min_len=1, max_len=50):
+        logger.warning(f"Nom de tag invalide (longueur): '{data['name']}'")
+        return jsonify({"error": "Le nom doit avoir entre 1 et 50 caractères"}), 400
     db = get_db()
     try:
         cursor = db.execute("INSERT INTO tags (name) VALUES (?)", (data["name"],))
@@ -293,6 +345,9 @@ def update_tag(tag_id):
     if not data or "name" not in data:
         logger.warning(f"Tentative de modifier le tag {tag_id} sans le champ 'name'")
         return jsonify({"error": "Le champ 'name' est requis"}), 400
+    if not validate_length(data["name"], min_len=1, max_len=50):
+        logger.warning(f"Nom de tag invalide (longueur) lors de modification: '{data['name']}'")
+        return jsonify({"error": "Le nom doit avoir entre 1 et 50 caractères"}), 400
     db = get_db()
     try:
         cursor = db.execute("UPDATE tags SET name = ? WHERE id = ?", (data["name"], tag_id))
