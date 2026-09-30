@@ -7,3 +7,12 @@
 @import './mixins/responsive';
 @import './mixins/typography';
 @import './mixins/effects';
+
+//Base
+@import './base/reset_base';
+
+// Layouts
+@import './layouts/main';
+
+// Components
+@import './components/sidebar';
