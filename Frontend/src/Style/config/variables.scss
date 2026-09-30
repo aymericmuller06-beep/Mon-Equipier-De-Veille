@@ -107,6 +107,36 @@ $gray-800: #1f2937;
 $gray-900: #111827;
 
 // ============================================
+// Theme Variables (Light/Dark + Accent)
+// ============================================
+
+// Theme tokens: CSS custom properties can change when html.dark is toggled.
+:root {
+	color-scheme: light;
+	--bg-primary: #{$gray-50};
+	--bg-secondary: #f9f9f9;
+	--bg-tertiary: #f1f1f1;
+	--text-primary: #{$gray-900};
+	--text-secondary: #{$gray-600};
+	--border-color: #{$gray-200};
+}
+
+html.dark {
+	color-scheme: dark;
+	--bg-primary: #202020;
+	--bg-secondary: #292929;
+	--bg-tertiary: #404040;
+	--text-primary: #{$gray-50};
+	--text-secondary: #{$gray-300};
+	--border-color: #{$gray-700};
+}
+
+// Accent Color (default: blue, can be changed by user)
+$accent-color: $blue-500;
+$accent-light: $blue-100;
+$accent-dark: $blue-900;
+
+// ============================================
 // Typography
 // ============================================
 

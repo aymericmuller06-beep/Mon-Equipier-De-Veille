@@ -1,0 +1,55 @@
+body {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  input,
+  textarea,
+  select {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+}
+
+.sidebar,
+.sidebar-header > div,
+.sidebar-footer,
+.theme-toggle {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+a {
+  color: var(--accent-color, $accent-color);
+  transition: color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    color: var(--accent-dark, $accent-dark);
+  }
+}
+
+// Buttons avec accent
+button {
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &.primary {
+    background-color: var(--accent-color, $accent-color);
+    color: white;
+
+    &:hover {
+      background-color: var(--accent-dark, $accent-dark);
+    }
+  }
+
+  &.secondary {
+    background-color: transparent;
+    color: var(--accent-color, $accent-color);
+    border: 1px solid var(--accent-color, $accent-color);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--accent-color, $accent-color) 10%, transparent);
+    }
+  }
+}
+

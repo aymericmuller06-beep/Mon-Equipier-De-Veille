@@ -3,7 +3,7 @@
 // ============================================
 
 // Box shadow
-@mixin shadow($shadow: $shadow-base) {
+@mixin shadow($shadow: $shadow-3) {
   box-shadow: $shadow;
 }
 
@@ -23,12 +23,12 @@
 }
 
 // Border radius
-@mixin border-radius($radius: $radius-lg) {
+@mixin border-radius($radius: $radius-4) {
   border-radius: $radius;
 }
 
 // Border radius by side
-@mixin border-radius-sides($top: $radius-lg, $bottom: $radius-lg) {
+@mixin border-radius-sides($top: $radius-4, $bottom: $radius-4) {
   border-top-left-radius: $top;
   border-top-right-radius: $top;
   border-bottom-left-radius: $bottom;
@@ -59,7 +59,7 @@
   @include transition(box-shadow);
   
   &:hover {
-    box-shadow: $shadow-lg;
+    box-shadow: $shadow-4;
   }
 }
 

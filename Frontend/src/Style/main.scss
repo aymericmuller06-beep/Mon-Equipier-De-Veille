@@ -9,10 +9,13 @@
 @import './mixins/effects';
 
 //Base
-@import './base/reset_base';
+@import './Base/reset_base';
+@import './Base/theme';
 
 // Layouts
 @import './layouts/main';
 
 // Components
 @import './components/sidebar';
+@import './components/theme-toggle';
+

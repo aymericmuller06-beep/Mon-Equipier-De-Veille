@@ -23,7 +23,7 @@
 }
 
 // Font style
-@mixin font-style($family: $font-sans, $weight: $weight-normal, $style: normal) {
+@mixin font-style($family: $font-sans, $weight: $weight-4, $style: normal) {
   font-family: $family;
   font-weight: $weight;
   font-style: $style;
@@ -51,26 +51,26 @@
 }
 
 // Headings preset
-@mixin heading($size: $font-2xl, $weight: $weight-bold, $color: $neutral-900) {
+@mixin heading($size: $font-6, $weight: $weight-7, $color: $gray-900) {
   font-size: $size;
   font-weight: $weight;
   color: $color;
-  line-height: $line-height-tight;
+  line-height: $line-height-1;
 }
 
 // Body text preset
-@mixin body-text($size: $font-base, $weight: $weight-normal, $color: $neutral-700) {
+@mixin body-text($size: $font-3, $weight: $weight-4, $color: $gray-700) {
   font-size: $size;
   font-weight: $weight;
   color: $color;
-  line-height: $line-height-normal;
+  line-height: $line-height-2;
 }
 
 // Caption text
-@mixin caption($size: $font-sm, $color: $neutral-500) {
+@mixin caption($size: $font-2, $color: $gray-500) {
   font-size: $size;
   color: $color;
-  line-height: $line-height-tight;
+  line-height: $line-height-1;
 }
 
 // Text decoration
