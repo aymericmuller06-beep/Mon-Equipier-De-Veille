@@ -131,10 +131,10 @@ html.dark {
 	--border-color: #{$gray-700};
 }
 
-// Accent Color (default: blue, can be changed by user)
-$accent-color: $blue-500;
-$accent-light: $blue-100;
-$accent-dark: $blue-900;
+// Accent Color (default: green; selected per watch in the interface)
+$accent-color: $green-500;
+$accent-light: $green-100;
+$accent-dark: $green-900;
 
 // ============================================
 // Typography

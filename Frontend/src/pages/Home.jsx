@@ -1,14 +1,15 @@
 import SideBar from '../Components/SideBar'
-import { ThemeToggle } from '../Components/ThemeToggle'
+import { useWatch } from '../Context/WatchContext'
 
 export default function Home() {
+  const { watchTitle } = useWatch()
+
   return (
     <div className='container'>
         <SideBar />
         <div className="home">
-            <ThemeToggle />
-            <h1>Accueil</h1>
-            <p>Bienvenue!</p>
+            <h1>{watchTitle || 'Votre espace de veille'}</h1>
+            <p>Bienvenue dans votre espace de veille.</p>
         </div>
     </div>
   )

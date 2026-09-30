@@ -1,4 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useWatch } from './WatchContext';
 
 export const ThemeContext = createContext();
 
@@ -13,6 +15,9 @@ const accentPalette = {
 };
 
 export const ThemeProvider = ({ children }) => {
+  const { watchTitle, getWatchAccent, setWatchAccent } = useWatch();
+  const { pathname } = useLocation();
+
   // Mode light/dark
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false; // SSR guard
@@ -21,11 +26,10 @@ export const ThemeProvider = ({ children }) => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Couleur d'accent (7 options: red, orange, yellow, green, blue, indigo, violet)
-  const [accentColor, setAccentColor] = useState(() => {
-    return localStorage.getItem('theme-accent') || 'blue';
-  });
-
+  // Le hub reste vert. L'accent propre à une veille ne s'applique que dans son espace.
+  const accentColor = pathname === '/veille' && watchTitle
+    ? getWatchAccent(watchTitle)
+    : 'green';
   const accentColors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
 
   // Appliquer le mode dark au body
@@ -45,11 +49,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     if (typeof document === 'undefined') return; // SSR guard
     
-    const accent = accentPalette[accentColor] ?? accentPalette.blue;
+    const accent = accentPalette[accentColor] ?? accentPalette.green;
     document.documentElement.style.setProperty('--accent-color', accent.color);
     document.documentElement.style.setProperty('--accent-light', accent.light);
     document.documentElement.style.setProperty('--accent-dark', accent.dark);
-    localStorage.setItem('theme-accent', accentColor);
   }, [accentColor]);
 
   const toggleDarkMode = () => {
@@ -58,7 +61,7 @@ export const ThemeProvider = ({ children }) => {
 
   const changeAccentColor = (color) => {
     if (accentColors.includes(color)) {
-      setAccentColor(color);
+      setWatchAccent(watchTitle, color);
     }
   };
 
