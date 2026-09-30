@@ -1,0 +1,105 @@
+// ============================================
+// Effects & Utility Mixins
+// ============================================
+
+// Box shadow
+@mixin shadow($shadow: $shadow-base) {
+  box-shadow: $shadow;
+}
+
+// Transition
+@mixin transition($property: all, $duration: $duration-base, $timing: $timing-ease-in-out) {
+  transition: $property $duration $timing;
+}
+
+// Multiple transitions
+@mixin transitions($transitions...) {
+  transition: $transitions;
+}
+
+// Transform
+@mixin transform($transforms...) {
+  transform: $transforms;
+}
+
+// Border radius
+@mixin border-radius($radius: $radius-lg) {
+  border-radius: $radius;
+}
+
+// Border radius by side
+@mixin border-radius-sides($top: $radius-lg, $bottom: $radius-lg) {
+  border-top-left-radius: $top;
+  border-top-right-radius: $top;
+  border-bottom-left-radius: $bottom;
+  border-bottom-right-radius: $bottom;
+}
+
+// Background gradient
+@mixin gradient($start-color, $end-color, $direction: to right) {
+  background: linear-gradient($direction, $start-color, $end-color);
+}
+
+// Opacity with transition
+@mixin fade-transition($duration: $duration-base) {
+  @include transition(opacity, $duration);
+}
+
+// Hover scale effect
+@mixin hover-scale($scale: 1.05) {
+  @include transition(transform);
+  
+  &:hover {
+    @include transform(scale($scale));
+  }
+}
+
+// Hover lift effect (shadow increase)
+@mixin hover-lift {
+  @include transition(box-shadow);
+  
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
+}
+
+// Overlay/Backdrop
+@mixin overlay($color: rgba(0, 0, 0, 0.5)) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: $color;
+  z-index: $z-modal-backdrop;
+}
+
+// Opacity
+@mixin opacity($opacity) {
+  opacity: $opacity;
+}
+
+// Filter blur
+@mixin blur($amount: 10px) {
+  filter: blur($amount);
+}
+
+// Disable user select
+@mixin no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+// Show on hover
+@mixin show-on-hover($element) {
+  #{$element} {
+    opacity: 0;
+    @include transition(opacity);
+  }
+  
+  &:hover #{$element} {
+    opacity: 1;
+  }
+}

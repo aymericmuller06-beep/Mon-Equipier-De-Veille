@@ -1,0 +1,81 @@
+// ============================================
+// Typography Mixins
+// ============================================
+
+// Text truncate
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Line clamp (multi-line truncate)
+@mixin line-clamp($lines: 1) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Responsive font size
+@mixin font-size($size) {
+  font-size: $size;
+}
+
+// Font style
+@mixin font-style($family: $font-sans, $weight: $weight-normal, $style: normal) {
+  font-family: $family;
+  font-weight: $weight;
+  font-style: $style;
+}
+
+// Text color with hover
+@mixin text-color($color, $hover-color: null) {
+  color: $color;
+  
+  @if $hover-color {
+    &:hover {
+      color: $hover-color;
+    }
+  }
+}
+
+// Letter spacing
+@mixin letter-spacing($spacing) {
+  letter-spacing: $spacing;
+}
+
+// Text transform
+@mixin text-transform($transform) {
+  text-transform: $transform;
+}
+
+// Headings preset
+@mixin heading($size: $font-2xl, $weight: $weight-bold, $color: $neutral-900) {
+  font-size: $size;
+  font-weight: $weight;
+  color: $color;
+  line-height: $line-height-tight;
+}
+
+// Body text preset
+@mixin body-text($size: $font-base, $weight: $weight-normal, $color: $neutral-700) {
+  font-size: $size;
+  font-weight: $weight;
+  color: $color;
+  line-height: $line-height-normal;
+}
+
+// Caption text
+@mixin caption($size: $font-sm, $color: $neutral-500) {
+  font-size: $size;
+  color: $color;
+  line-height: $line-height-tight;
+}
+
+// Text decoration
+@mixin text-decoration($line: underline, $style: solid, $color: currentColor) {
+  text-decoration: $line;
+  text-decoration-style: $style;
+  text-decoration-color: $color;
+}

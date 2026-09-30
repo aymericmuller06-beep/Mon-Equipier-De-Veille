@@ -1,0 +1,53 @@
+// ============================================
+// Flexbox Mixins
+// ============================================
+
+// Flex container
+@mixin flex($direction: row, $justify: flex-start, $align: stretch, $wrap: nowrap) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  flex-wrap: $wrap;
+}
+
+// Center content (both horizontally and vertically)
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// Space between flex items
+@mixin flex-space-between {
+  display: flex;
+  justify-content: space-between;
+}
+
+// Flex column centered
+@mixin flex-column-center {
+  @include flex(column, center, center);
+}
+
+// Flex gap
+@mixin flex-gap($gap) {
+  gap: $gap;
+}
+
+// Grid Layout
+@mixin grid($columns: 1, $gap: 1rem, $rows: auto) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  grid-auto-rows: $rows;
+  gap: $gap;
+}
+
+// Flex grow
+@mixin flex-grow($grow: 1) {
+  flex-grow: $grow;
+}
+
+// Flex basis
+@mixin flex-basis($basis) {
+  flex-basis: $basis;
+}

@@ -10,13 +10,13 @@ services:
     environment:
       - FLASK_ENV=production
 
-  frontend:
-    build: ./Frontend
-    container_name: equipier_veille_frontend
-    ports:
-      - "3000:5173"
-    environment:
-      - REACT_APP_API_URL=http://localhost:8000
-    restart: unless-stopped
-    depends_on:
-      - backend
+  # frontend:
+  #   build: ./Frontend
+  #   container_name: equipier_veille_frontend
+  #   ports:
+  #     - "3000:5173"
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:8000
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend

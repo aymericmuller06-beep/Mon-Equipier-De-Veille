@@ -73,6 +73,11 @@ Contraintes:
 
 Dossier Frontend/ prêt pour l'application frontend.
 
+```bash
+cd Frontend
+npm run dev
+```
+
 Configuration pour communiquer avec le backend sur `http://localhost:8000`:
 - Variable d'environnement `REACT_APP_API_URL`
 - CORS géré côté backend
