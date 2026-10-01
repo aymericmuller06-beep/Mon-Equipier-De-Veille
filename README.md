@@ -1,83 +1,39 @@
 # Equipier de Veille
+Application de veille composée d'une interface web, d'une API Flask et d'une base SQLite.
 
-Projet de gestion de sources, thèmes et articles.
+## Installation et démarrage
 
-## Structure du projet
+Prérequis : Docker et Docker Compose.
 
-```
-.
-├── Backend/              # API Flask
-│   ├── main.py          # Application principale
-│   ├── routes.py        # Endpoints API
-│   ├── database.py       # Configuration SQLite
-│   ├── Dockerfile       # Build backend
-│   ├── requirements.txt  # Dépendances Python
-│   └── README.md        # Documentation API
-├── Frontend/            # Application frontend
-├── Data/               # Données
-├── data/               # Volume SQLite
-├── docker-compose.yml   # Configuration services
-└── README.md           # Ce fichier
-```
+Depuis la racine du projet, démarrez l'application complète :
 
-## Démarrage
-
-### Avec Docker Compose
 ```bash
-docker compose up --build -d
+docker compose up --build
 ```
 
-Backend accessible sur `http://localhost:8000`
+Lancez en arrière-plan avec `docker compose up --build -d`.
 
-### Backend uniquement (local)
+- Interface web : <http://localhost:3000>
+- API : <http://localhost:8000>
+
+Pour arrêter les services lancés en arrière-plan :
+
 ```bash
-cd Backend
-pip install -r requirements.txt
-python main.py
+docker compose down
 ```
 
-## API Backend
+## Lancer le frontend en local
 
-Endpoints API pour thèmes, sources, articles et tags.
-
-Voir [Backend/README.md](Backend/README.md) pour la documentation complète.
-
-Validation:
-- URLs: format http/https valide
-- Textes: longueurs min/max selon ressource  
-- Relations: existence des IDs
-
-## Base de données
-
-SQLite automatiquement initialisée. Fichier: `data/veille.db`
-
-Schéma:
-- `themes` - Thèmes de veille
-- `sources` - Sources d'information
-- `articles` - Articles collectés
-- `tags` - Tags pour classification
-- `article_tags` - Relation many-to-many
-
-Contraintes:
-- Clés étrangères activées
-- Cascade delete sur suppressions
-
-## Services
-
-| Service | Port | Build |
-|---------|------|-------|
-| backend | 8000 | ./Backend |
-| frontend | 3000 | ./Frontend |
-
-## Frontend
-
-Dossier Frontend/ prêt pour l'application frontend.
+Prérequis : Node.js et npm. Depuis la racine du projet :
 
 ```bash
 cd Frontend
+npm ci
 npm run dev
 ```
 
-Configuration pour communiquer avec le backend sur `http://localhost:8000`:
-- Variable d'environnement `REACT_APP_API_URL`
-- CORS géré côté backend
+Vite affiche l'adresse locale dans le terminal (par défaut <http://localhost:5173>). Le backend doit être démarré séparément.
+
+La base SQLite est stockée dans `data/veille.db`.
+
+Documentation complémentaire : [API](Backend/README.md) et [frontend](Frontend/README.md).
