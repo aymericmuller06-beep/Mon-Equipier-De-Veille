@@ -1,22 +1,21 @@
 .watch-selection-page {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: stretch;
   min-height: 100vh;
-  padding: $spacing-5;
   background:
-    radial-gradient(ellipse 58% 48% at 50% 42%, color-mix(in srgb, var(--accent-color, $accent-color) 12%, transparent) 0%, transparent 100%),
-    radial-gradient(ellipse 42% 34% at 69% 64%, color-mix(in srgb, var(--accent-color, $accent-color) 4%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 58% 48% at 30% 42%, color-mix(in srgb, var(--accent-color, $accent-color) 12%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 42% 34% at 20% 64%, color-mix(in srgb, var(--accent-color, $accent-color) 4%, transparent) 0%, transparent 100%),
     var(--bg-primary);
 }
 
-.watch-selection-content {
-  width: min(100%, 66rem);
-}
-
-.watch-selection-header {
-  max-width: 43rem;
-  margin: 0 auto $spacing-5;
-  text-align: center;
+// Colonne de gauche : titre, pitch et bouton de création
+.watch-selection-left {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: $spacing-5 clamp($spacing-4, 6vw, $spacing-8);
 
   .watch-selection-icon {
     display: grid;
@@ -24,8 +23,6 @@
     width: 3rem;
     height: 3rem;
     margin-bottom: $spacing-3;
-    margin-right: auto;
-    margin-left: auto;
     border-radius: $radius-5;
     color: var(--accent-color, $accent-color);
     background-color: color-mix(in srgb, var(--accent-color, $accent-color) 14%, var(--bg-secondary));
@@ -45,6 +42,7 @@
   }
 
   h1 {
+    max-width: 24ch;
     margin-bottom: $spacing-2;
     color: var(--text-primary);
     font-size: clamp($font-6, 5vw, $font-8);
@@ -52,122 +50,60 @@
   }
 
   .watch-selection-description {
+    max-width: 40ch;
+    margin-bottom: $spacing-4;
     color: var(--text-secondary);
     font-size: $font-3;
     line-height: $line-height-2;
   }
-}
-
-.watch-selection-card {
-  min-width: 0;
-  padding: $spacing-4;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-6;
-  background-color: var(--bg-secondary);
-  box-shadow: $shadow-4;
-  transition: border-color $duration-fast ease, transform $duration-fast ease;
-
-  &:hover {
-    border-color: color-mix(in srgb, var(--accent-color, $accent-color) 35%, var(--border-color));
-  }
-
-  .watch-selection-icon {
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
-    margin-bottom: $spacing-3;
-    border-radius: $radius-5;
-    color: var(--accent-color, $accent-color);
-    background-color: color-mix(in srgb, var(--accent-color, $accent-color) 14%, var(--bg-secondary));
-
-    svg {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-  }
-
-  .watch-selection-eyebrow {
-    margin-bottom: $spacing-1;
-    color: var(--accent-color, $accent-color);
-    font-size: $font-1;
-    font-weight: $weight-7;
-    letter-spacing: 0.1em;
-  }
-
-  h2 {
-    color: var(--text-primary);
-    font-size: $font-4;
-  }
-
-  .watch-selection-description {
-    color: var(--text-secondary);
-    font-size: $font-2;
-    line-height: $line-height-2;
-  }
-
-  label {
-    display: block;
-    margin-bottom: $spacing-1;
-    color: var(--text-primary);
-    font-size: $font-2;
-    font-weight: $weight-6;
-  }
-
-  input {
-    width: 100%;
-    min-height: 2.75rem;
-    padding: $spacing-2 $spacing-3;
-    border: 1px solid var(--border-color);
-    border-radius: $radius-4;
-    color: var(--text-primary);
-    background-color: var(--bg-primary);
-    font: inherit;
-
-    &:focus {
-      border-color: var(--accent-color, $accent-color);
-      outline: 2px solid color-mix(in srgb, var(--accent-color, $accent-color) 22%, transparent);
-    }
-  }
 
   .watch-selection-submit {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: $spacing-2;
-    width: 100%;
-    min-height: 2.75rem;
-    margin: $spacing-3 0 $spacing-3;
-    border: 0;
-    border-radius: $radius-4;
-    color: white;
-    background-color: var(--accent-color, $accent-color);
-    font: inherit;
-    font-weight: $weight-6;
-    cursor: pointer;
-    transition: background-color $duration-fast ease, transform $duration-fast ease;
-
-    &:hover {
-      background-color: var(--accent-dark, $accent-dark);
-      transform: translateY(-1px);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--accent-color, $accent-color);
-      outline-offset: 3px;
-    }
-
-    svg {
-      width: 1rem;
-      height: 1rem;
-    }
+    width: fit-content;
   }
 }
 
-.watch-selection-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(17rem, 0.75fr);
-  gap: $spacing-3;
+// Colonne de droite : liste des veilles, taille fixe sur toute la hauteur
+.watch-selection-right {
+  flex: 0 0 24rem;
+  width: 24rem;
+  max-width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  padding: $spacing-5 $spacing-4;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.watch-selection-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 2.75rem;
+  padding: 0 $spacing-4;
+  border: 0;
+  border-radius: $radius-4;
+  color: white;
+  background-color: var(--accent-color, $accent-color);
+  font: inherit;
+  font-weight: $weight-6;
+  cursor: pointer;
+  transition: background-color $duration-fast ease, transform $duration-fast ease;
+
+  &:hover {
+    background-color: var(--accent-dark, $accent-dark);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-color, $accent-color);
+    outline-offset: 3px;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .watch-selection-card-heading {
@@ -236,8 +172,7 @@
   }
 }
 
-.watch-list-radio,
-.watch-create-icon {
+.watch-list-radio {
   display: grid;
   place-items: center;
   flex: 0 0 2rem;
@@ -319,42 +254,6 @@ $watch-accent-colors: (
   }
 }
 
-.watch-create-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-
-  .watch-create-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    margin-bottom: $spacing-3;
-
-    svg {
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-  }
-
-  h2 {
-    margin-bottom: $spacing-1;
-  }
-
-  > p {
-    color: var(--text-secondary);
-    font-size: $font-2;
-    line-height: $line-height-2;
-  }
-
-  .watch-selection-submit {
-    margin-top: auto;
-  }
-}
-
-.watch-create-form {
-  width: 100%;
-  margin-top: $spacing-3;
-}
-
 .watch-selection-status {
   padding: $spacing-4 $spacing-3;
   color: var(--text-secondary);
@@ -375,30 +274,27 @@ $watch-accent-colors: (
   text-align: center;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 760px) {
   .watch-selection-page {
-    padding: $spacing-3;
+    flex-direction: column;
   }
 
-  .watch-selection-grid {
-    grid-template-columns: 1fr;
+  .watch-selection-left {
+    padding: $spacing-4;
   }
 
-  .watch-selection-card {
-    padding: $spacing-3;
-  }
-
-  .watch-selection-header h1 {
-    font-size: $font-5;
+  .watch-selection-right {
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 20rem;
+    border-top: 1px solid var(--border-color);
+    border-left: 0;
   }
 }
 
-@media (max-width: 760px) {
-  .watch-selection-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .watch-create-card .watch-selection-submit {
-    margin-top: $spacing-3;
+@media (max-width: 480px) {
+  .watch-selection-left h1 {
+    font-size: $font-5;
   }
 }

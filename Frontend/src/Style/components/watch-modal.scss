@@ -1,0 +1,147 @@
+.watch-modal-backdrop {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding: $spacing-4;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.watch-modal {
+  width: min(100%, 26rem);
+  padding: $spacing-4;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-6;
+  background-color: var(--bg-secondary);
+  box-shadow: $shadow-6;
+}
+
+.watch-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-3;
+
+  h2 {
+    color: var(--text-primary);
+    font-size: $font-4;
+  }
+}
+
+.watch-modal-close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: $radius-3;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color $duration-fast ease, color $duration-fast ease;
+
+  &:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.watch-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+
+  label,
+  .watch-modal-label {
+    display: block;
+    margin-bottom: $spacing-1;
+    color: var(--text-primary);
+    font-size: $font-2;
+    font-weight: $weight-6;
+  }
+
+  .watch-modal-label {
+    margin-top: $spacing-2;
+  }
+
+  input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: $spacing-2 $spacing-3;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-4;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    font: inherit;
+
+    &:focus {
+      border-color: var(--accent-color, $accent-color);
+      outline: 2px solid color-mix(in srgb, var(--accent-color, $accent-color) 22%, transparent);
+    }
+  }
+}
+
+.watch-modal-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
+}
+
+.watch-modal-swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-radius: $radius-full;
+  cursor: pointer;
+  transition: transform $duration-fast ease, border-color $duration-fast ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &.active {
+    border-color: var(--text-primary);
+  }
+
+  &--red { background-color: $red-500; }
+  &--orange { background-color: $orange-500; }
+  &--yellow { background-color: $yellow-500; }
+  &--green { background-color: $green-500; }
+  &--blue { background-color: $blue-500; }
+  &--indigo { background-color: $indigo-500; }
+  &--violet { background-color: $violet-500; }
+}
+
+.watch-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+}
+
+.watch-modal-cancel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 $spacing-4;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-4;
+  color: var(--text-primary);
+  background: transparent;
+  font: inherit;
+  font-weight: $weight-6;
+  cursor: pointer;
+  transition: background-color $duration-fast ease;
+
+  &:hover {
+    background-color: var(--bg-tertiary);
+  }
+}

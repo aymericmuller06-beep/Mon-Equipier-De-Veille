@@ -26,14 +26,17 @@ export function WatchProvider({ children }) {
     if (!cleanTitle) return
 
     const existing = watches.find((watch) => watch.name === cleanTitle)
-    if (existing) {
-      setWatchTitle(existing.name)
-      return
-    }
+    if (existing) setWatchTitle(existing.name)
+  }
 
-    const created = await createTheme(cleanTitle)
+  const createWatch = async (title, accentColor = 'green') => {
+    const cleanTitle = title.trim()
+    if (!cleanTitle) return
+
+    const created = await createTheme(cleanTitle, accentColor)
     setWatches((currentWatches) => [...currentWatches, created])
     setWatchTitle(created.name)
+    return created
   }
 
   const getWatchAccent = (title) => {
@@ -61,7 +64,7 @@ export function WatchProvider({ children }) {
   }
 
   return (
-    <WatchContext.Provider value={{ watchTitle, watches, loading, error, selectWatch, getWatchAccent, setWatchAccent, deleteWatch }}>
+    <WatchContext.Provider value={{ watchTitle, watches, loading, error, selectWatch, createWatch, getWatchAccent, setWatchAccent, deleteWatch }}>
       {children}
     </WatchContext.Provider>
   )
