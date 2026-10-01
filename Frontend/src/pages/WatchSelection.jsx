@@ -3,6 +3,7 @@ import { ArrowRight, Plus, Radio } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useWatch } from '../Context/WatchContext'
 import CreateWatchModal from '../Components/CreateWatchModal'
+import AccountMenu from '../Components/AccountMenu'
 
 export default function WatchSelection() {
   const { watches, loading, error, selectWatch, createWatch } = useWatch()
@@ -84,6 +85,8 @@ export default function WatchSelection() {
         onClose={() => setIsModalOpen(false)}
         onCreate={handleCreate}
       />
+
+      <AccountMenu />
     </section>
   )
 }

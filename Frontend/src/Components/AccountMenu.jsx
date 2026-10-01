@@ -3,7 +3,7 @@ import { Moon, Sun, X } from 'lucide-react'
 import { useTheme } from '../Context/useTheme'
 import avatarPlaceholder from '../assets/Avatar-placeholder.jpeg'
 
-export default function AccountMenu() {
+export default function AccountMenu({ variant = 'floating' }) {
   const { isDark, toggleDarkMode } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const panelRef = useRef(null)
@@ -27,7 +27,7 @@ export default function AccountMenu() {
   }, [isOpen])
 
   return (
-    <div className="account-menu" ref={panelRef}>
+    <div className={`account-menu account-menu--${variant}`} ref={panelRef}>
       {isOpen && (
         <div className="account-menu-panel" role="dialog" aria-modal="false" aria-labelledby="account-menu-title">
           <div className="account-menu-header">

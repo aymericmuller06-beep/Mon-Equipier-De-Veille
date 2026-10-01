@@ -4,7 +4,6 @@ import { ThemeProvider } from './Context/ThemeContext'
 import { WatchProvider } from './Context/WatchContext'
 import Home from './pages/Home'
 import WatchSelection from './pages/WatchSelection'
-import AccountMenu from './Components/AccountMenu'
 
 function App() {
   return (
@@ -18,7 +17,6 @@ function App() {
               <Route path="/veille" element={<Home />} />
             </Routes>
           </main>
-          <AccountMenu />
         </ThemeProvider>
       </Router>
     </WatchProvider>

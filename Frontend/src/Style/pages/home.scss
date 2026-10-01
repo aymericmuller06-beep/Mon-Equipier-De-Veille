@@ -1,1 +1,36 @@
-//home
+.home {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+// Barre commune à toutes les veilles : accueillera plus tard un espace de recherche à gauche
+.veille-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+}
+
+.home-content {
+  flex: 1;
+  padding: $spacing-5 $spacing-4;
+
+  h1 {
+    margin-bottom: $spacing-2;
+    color: var(--text-primary);
+    font-size: $font-7;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: $font-3;
+  }
+}

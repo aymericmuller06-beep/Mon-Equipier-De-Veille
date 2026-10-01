@@ -1,4 +1,5 @@
 import SideBar from '../Components/SideBar'
+import AccountMenu from '../Components/AccountMenu'
 import { useWatch } from '../Context/WatchContext'
 
 export default function Home() {
@@ -8,8 +9,14 @@ export default function Home() {
     <div className='container'>
         <SideBar />
         <div className="home">
-            <h1>{watchTitle || 'Votre espace de veille'}</h1>
-            <p>Bienvenue dans votre espace de veille.</p>
+            {/* Commun à toutes les veilles ; accueillera plus tard un espace de recherche */}
+            <header className="veille-header">
+                <AccountMenu variant="inline" />
+            </header>
+            <div className="home-content">
+                <h1>{watchTitle || 'Votre espace de veille'}</h1>
+                <p>Bienvenue dans votre espace de veille.</p>
+            </div>
         </div>
     </div>
   )

@@ -1,8 +1,16 @@
 .account-menu {
+  z-index: 200;
+}
+
+.account-menu--floating {
   position: fixed;
   left: $spacing-4;
   bottom: $spacing-4;
-  z-index: 200;
+}
+
+// Intégré dans le header d'une veille : pas de position fixe, le menu suit le flux
+.account-menu--inline {
+  position: relative;
 }
 
 .account-menu-trigger {
@@ -52,6 +60,18 @@
   }
 }
 
+.account-menu--inline .account-menu-trigger {
+  min-width: 0;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-2;
+}
+
+.account-menu--inline .account-menu-trigger .account-menu-avatar {
+  flex-basis: 2rem;
+  width: 2rem;
+  height: 2rem;
+}
+
 .account-menu-panel {
   position: absolute;
   left: 0;
@@ -63,6 +83,14 @@
   border-radius: $radius-3;
   background-color: var(--bg-secondary);
   box-shadow: $shadow-5;
+}
+
+// Le header est en haut de l'écran : le panneau s'ouvre vers le bas, aligné à droite
+.account-menu--inline .account-menu-panel {
+  top: calc(100% + #{$spacing-2});
+  right: 0;
+  bottom: auto;
+  left: auto;
 }
 
 .account-menu-header {
