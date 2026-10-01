@@ -4,10 +4,10 @@ export function getThemes() {
   return apiFetch('/themes')
 }
 
-export function createTheme(name, accentColor) {
+export function createTheme(name, description, accentColor) {
   return apiFetch('/themes', {
     method: 'POST',
-    body: JSON.stringify({ name, accent_color: accentColor }),
+    body: JSON.stringify({ name, description, accent_color: accentColor }),
   })
 }
 

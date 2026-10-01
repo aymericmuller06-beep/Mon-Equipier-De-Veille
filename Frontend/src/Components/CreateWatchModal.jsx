@@ -5,6 +5,7 @@ const ACCENT_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'vi
 
 export default function CreateWatchModal({ isOpen, onClose, onCreate }) {
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('') 
   const [accentColor, setAccentColor] = useState('green')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
@@ -13,6 +14,7 @@ export default function CreateWatchModal({ isOpen, onClose, onCreate }) {
   useEffect(() => {
     if (!isOpen) return
     setTitle('')
+    setDescription('')
     setAccentColor('green')
     setFormError('')
     setSubmitting(false)
@@ -36,7 +38,7 @@ export default function CreateWatchModal({ isOpen, onClose, onCreate }) {
     setSubmitting(true)
     setFormError('')
     try {
-      await onCreate(title.trim(), accentColor)
+      await onCreate(title.trim(), description.trim(), accentColor)
     } catch (err) {
       setFormError(err.message)
       setSubmitting(false)
@@ -70,6 +72,15 @@ export default function CreateWatchModal({ isOpen, onClose, onCreate }) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
+          />
+
+          <label htmlFor="watch-description">Description</label>
+          <textarea
+            id="watch-description"
+            name="watchDescription"
+            placeholder="Ex. : Suivi des dernières tendances technologiques"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
           />
 
           <span className="watch-modal-label">Couleur</span>

@@ -26,6 +26,7 @@ def init_db(app):
             CREATE TABLE IF NOT EXISTS themes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
+                description TEXT,
                 accent_color TEXT NOT NULL DEFAULT 'green'
             )
         """)
@@ -34,6 +35,9 @@ def init_db(app):
         theme_columns = [row["name"] for row in db.execute("PRAGMA table_info(themes)").fetchall()]
         if "accent_color" not in theme_columns:
             db.execute("ALTER TABLE themes ADD COLUMN accent_color TEXT NOT NULL DEFAULT 'green'")
+        # Migration pour les bases créées avant l'ajout de description
+        if "description" not in theme_columns:
+            db.execute("ALTER TABLE themes ADD COLUMN description TEXT")
         
         db.execute("""
             CREATE TABLE IF NOT EXISTS sources (

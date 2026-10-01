@@ -20,8 +20,8 @@ export default function WatchSelection() {
     }
   }
 
-  const handleCreate = async (title, accentColor) => {
-    await createWatch(title, accentColor)
+  const handleCreate = async (title, description, accentColor) => {
+    await createWatch(title, description, accentColor)
     setIsModalOpen(false)
     navigate('/veille')
   }
@@ -66,6 +66,7 @@ export default function WatchSelection() {
                 >
                   <span className={`watch-list-radio watch-list-radio--${watch.accent_color || 'green'}`} aria-hidden="true"><Radio /></span>
                   <span className="watch-list-title">{watch.name}</span>
+                  {watch.description ? <span className="watch-list-description">{watch.description}</span> : <span className="watch-list-description">Aucune description</span>}
                   <ArrowRight aria-hidden="true" />
                 </button>
               </li>

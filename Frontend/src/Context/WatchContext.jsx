@@ -30,11 +30,11 @@ export function WatchProvider({ children }) {
     if (existing) setWatchTitle(existing.name)
   }
 
-  const createWatch = async (title, accentColor = 'green') => {
+  const createWatch = async (title, description = '', accentColor = 'green') => {
     const cleanTitle = title.trim()
     if (!cleanTitle) return
 
-    const created = await createTheme(cleanTitle, accentColor)
+    const created = await createTheme(cleanTitle, description.trim(), accentColor)
     setWatches((currentWatches) => [...currentWatches, created])
     setWatchTitle(created.name)
     return created
