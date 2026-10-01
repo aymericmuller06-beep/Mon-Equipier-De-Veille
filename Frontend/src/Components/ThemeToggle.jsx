@@ -3,26 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../Context/useTheme';
 import { useWatch } from '../Context/WatchContext';
 import { Moon, Sun, Trash2 } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 export const ThemeToggle = () => {
   const { isDark, toggleDarkMode, accentColor, changeAccentColor, accentColors } = useTheme();
   const { watchTitle, deleteWatch } = useWatch();
   const navigate = useNavigate();
-  const [deleting, setDeleting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handleDelete = async () => {
-    if (!watchTitle || deleting) return;
-    const confirmed = window.confirm(`Supprimer définitivement la veille "${watchTitle}" ? Cette action est irréversible.`);
-    if (!confirmed) return;
-
-    setDeleting(true);
-    try {
-      await deleteWatch(watchTitle);
-      navigate('/');
-    } catch (err) {
-      window.alert(err.message);
-      setDeleting(false);
-    }
+    await deleteWatch(watchTitle);
+    setIsConfirmOpen(false);
+    navigate('/');
   };
 
   return (
@@ -67,13 +59,23 @@ export const ThemeToggle = () => {
         <button
           type="button"
           className="theme-toggle__delete"
-          onClick={handleDelete}
-          disabled={!watchTitle || deleting}
+          onClick={() => setIsConfirmOpen(true)}
+          disabled={!watchTitle}
         >
           <Trash2 aria-hidden="true" />
-          {deleting ? 'Suppression…' : 'Supprimer cette veille'}
+          Supprimer cette veille
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Supprimer cette veille"
+        message={`Supprimer définitivement la veille "${watchTitle}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        variant="danger"
+      />
     </div>
   );
 };

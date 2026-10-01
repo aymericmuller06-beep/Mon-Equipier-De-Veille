@@ -28,8 +28,7 @@ export default function WatchSelection() {
   return (
     <section className="watch-selection-page">
       <div className="watch-selection-left">
-        <div className="watch-selection-icon" aria-hidden="true"><Radio /></div>
-        <p className="watch-selection-eyebrow">ÉQUIPIER DE VEILLE</p>
+        <p className="watch-selection-eyebrow">MON ÉQUIPIER DE VEILLE</p>
         <h1>Vos espaces de veille</h1>
         <p className="watch-selection-description">
           Ouvrez une veille déjà créée ou démarrez-en une nouvelle.

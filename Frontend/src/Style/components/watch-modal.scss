@@ -144,4 +144,29 @@
   &:hover {
     background-color: var(--bg-tertiary);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.confirm-modal-message {
+  margin-bottom: $spacing-2;
+  color: var(--text-secondary);
+  font-size: $font-2;
+  line-height: $line-height-2;
+}
+
+// Variante destructrice, ex. suppression définitive
+.watch-selection-submit--danger {
+  background-color: $red-600;
+
+  &:hover {
+    background-color: $red-700;
+  }
+
+  &:focus-visible {
+    outline-color: $red-600;
+  }
 }
