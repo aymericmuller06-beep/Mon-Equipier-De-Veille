@@ -1,8 +1,29 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../Context/useTheme';
-import { Moon, Sun } from 'lucide-react';
+import { useWatch } from '../Context/WatchContext';
+import { Moon, Sun, Trash2 } from 'lucide-react';
 
 export const ThemeToggle = () => {
   const { isDark, toggleDarkMode, accentColor, changeAccentColor, accentColors } = useTheme();
+  const { watchTitle, deleteWatch } = useWatch();
+  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!watchTitle || deleting) return;
+    const confirmed = window.confirm(`Supprimer définitivement la veille "${watchTitle}" ? Cette action est irréversible.`);
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteWatch(watchTitle);
+      navigate('/');
+    } catch (err) {
+      window.alert(err.message);
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="theme-toggle">
@@ -38,6 +59,20 @@ export const ThemeToggle = () => {
             />
           ))}
         </div>
+      </div>
+
+      {/* Suppression de la veille */}
+      <div className="theme-toggle__danger" role="group" aria-label="Zone de danger">
+        <span className="theme-toggle__label">Zone de danger</span>
+        <button
+          type="button"
+          className="theme-toggle__delete"
+          onClick={handleDelete}
+          disabled={!watchTitle || deleting}
+        >
+          <Trash2 aria-hidden="true" />
+          {deleting ? 'Suppression…' : 'Supprimer cette veille'}
+        </button>
       </div>
     </div>
   );

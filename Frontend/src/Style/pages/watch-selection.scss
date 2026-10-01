@@ -253,6 +253,35 @@
   }
 }
 
+// Chaque veille affiche sa propre couleur d'accent, indépendamment du thème général
+$watch-accent-colors: (
+  'red': $red-500,
+  'orange': $orange-500,
+  'yellow': $yellow-500,
+  'green': $green-500,
+  'blue': $blue-500,
+  'indigo': $indigo-500,
+  'violet': $violet-500,
+);
+
+@each $name, $value in $watch-accent-colors {
+  .watch-list-radio--#{$name} {
+    color: #{$value};
+    background-color: color-mix(in srgb, #{$value} 14%, var(--bg-secondary));
+  }
+
+  .watch-list-item--#{$name} {
+    &:hover {
+      border-color: #{$value};
+      background-color: color-mix(in srgb, #{$value} 6%, var(--bg-primary));
+    }
+
+    &:focus-visible {
+      outline-color: #{$value};
+    }
+  }
+}
+
 .watch-list-title {
   overflow: hidden;
   font-size: $font-2;
@@ -324,6 +353,18 @@
 .watch-create-form {
   width: 100%;
   margin-top: $spacing-3;
+}
+
+.watch-selection-status {
+  padding: $spacing-4 $spacing-3;
+  color: var(--text-secondary);
+  font-size: $font-2;
+  text-align: center;
+}
+
+.watch-selection-error {
+  color: $red-600;
+  font-size: $font-1;
 }
 
 .watch-selection-note {

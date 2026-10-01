@@ -4,22 +4,38 @@ import { useNavigate } from 'react-router-dom'
 import { useWatch } from '../Context/WatchContext'
 
 export default function WatchSelection() {
-  const { watches, selectWatch } = useWatch()
+  const { watches, loading, error, selectWatch } = useWatch()
   const [title, setTitle] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
 
-  const openWatch = (watch) => {
-    selectWatch(watch)
-    navigate('/veille')
+  const openWatch = async (watch) => {
+    try {
+      await selectWatch(watch)
+      navigate('/veille')
+    } catch (err) {
+      setFormError(err.message)
+    }
   }
 
-  const handleCreate = (event) => {
+  const handleCreate = async (event) => {
     event.preventDefault()
-    if (!title.trim()) return
+    if (!title.trim() || submitting) return
 
-    openWatch(title.trim())
+    setSubmitting(true)
+    setFormError('')
+    try {
+      await selectWatch(title.trim())
+      navigate('/veille')
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
+
 
   return (
     <section className="watch-selection-page">
@@ -43,13 +59,21 @@ export default function WatchSelection() {
               <span className="watch-count">{watches.length}</span>
             </div>
 
-            {watches.length > 0 ? (
+            {loading ? (
+              <p className="watch-selection-status">Chargement des veilles…</p>
+            ) : error ? (
+              <p className="watch-selection-status watch-selection-error">Impossible de contacter le serveur : {error}</p>
+            ) : watches.length > 0 ? (
               <ul className="watch-list">
                 {watches.map((watch) => (
-                  <li key={watch}>
-                    <button className="watch-list-item" type="button" onClick={() => openWatch(watch)}>
-                      <span className="watch-list-radio" aria-hidden="true"><Radio /></span>
-                      <span className="watch-list-title">{watch}</span>
+                  <li key={watch.id}>
+                    <button
+                      className={`watch-list-item watch-list-item--${watch.accent_color || 'green'}`}
+                      type="button"
+                      onClick={() => openWatch(watch.name)}
+                    >
+                      <span className={`watch-list-radio watch-list-radio--${watch.accent_color || 'green'}`} aria-hidden="true"><Radio /></span>
+                      <span className="watch-list-title">{watch.name}</span>
                       <ArrowRight aria-hidden="true" />
                     </button>
                   </li>
@@ -82,8 +106,9 @@ export default function WatchSelection() {
                   onChange={(event) => setTitle(event.target.value)}
                   required
                 />
-                <button className="watch-selection-submit" type="submit">
-                  Créer et ouvrir <ArrowRight aria-hidden="true" />
+                {formError && <p className="watch-selection-error">{formError}</p>}
+                <button className="watch-selection-submit" type="submit" disabled={submitting}>
+                  {submitting ? 'Création…' : <>Créer et ouvrir <ArrowRight aria-hidden="true" /></>}
                 </button>
               </form>
             ) : (
@@ -94,7 +119,7 @@ export default function WatchSelection() {
           </section>
         </div>
 
-        <p className="watch-selection-note">Interface en cours de construction : les changements restent temporaires et ne sont pas enregistrés.</p>
+        <p className="watch-selection-note">Les veilles sont enregistrées sur le serveur backend.</p>
       </div>
     </section>
   )

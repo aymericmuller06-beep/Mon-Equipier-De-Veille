@@ -34,6 +34,12 @@ def id_exists(table, id_value):
     except:
         return False
 
+ACCENT_COLORS = {"red", "orange", "yellow", "green", "blue", "indigo", "violet"}
+
+def validate_accent_color(color):
+    """Valide qu'une couleur d'accent fait partie des couleurs autorisées"""
+    return color in ACCENT_COLORS
+
 
 @api.route("/")
 def read_root():
@@ -58,12 +64,16 @@ def add_theme():
     if not validate_length(data["name"], min_len=1, max_len=100):
         logger.warning(f"Nom de thème invalide (longueur): '{data['name']}'")
         return jsonify({"error": "Le nom doit avoir entre 1 et 100 caractères"}), 400
+    accent_color = data.get("accent_color", "green")
+    if not validate_accent_color(accent_color):
+        logger.warning(f"Couleur d'accent invalide rejetée: '{accent_color}'")
+        return jsonify({"error": "Couleur d'accent invalide"}), 400
     db = get_db()
     try:
-        cursor = db.execute("INSERT INTO themes (name) VALUES (?)", (data["name"],))
+        cursor = db.execute("INSERT INTO themes (name, accent_color) VALUES (?, ?)", (data["name"], accent_color))
         db.commit()
         logger.info(f"✓ Thème créé: '{data['name']}' (ID: {cursor.lastrowid})")
-        return jsonify({"id": cursor.lastrowid, "name": data["name"]}), 201
+        return jsonify({"id": cursor.lastrowid, "name": data["name"], "accent_color": accent_color}), 201
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Thème dupliqué: '{data['name']}' - {str(e)}")
         return jsonify({"error": "Ce thème existe déjà"}), 409
@@ -71,21 +81,30 @@ def add_theme():
 @api.route("/themes/<int:theme_id>", methods=["PUT"])
 def update_theme(theme_id):
     data = request.get_json()
-    if not data or "name" not in data:
-        logger.warning(f"Tentative de modifier le thème {theme_id} sans le champ 'name'")
-        return jsonify({"error": "Le champ 'name' est requis"}), 400
-    if not validate_length(data["name"], min_len=1, max_len=100):
+    if not data or not any(k in data for k in ("name", "accent_color")):
+        logger.warning(f"Tentative de modifier le thème {theme_id} sans 'name' ni 'accent_color'")
+        return jsonify({"error": "Le champ 'name' ou 'accent_color' est requis"}), 400
+
+    db = get_db()
+    theme = db.execute("SELECT * FROM themes WHERE id = ?", (theme_id,)).fetchone()
+    if theme is None:
+        logger.warning(f"✗ Thème {theme_id} non trouvé pour modification")
+        return jsonify({"error": "Thème non trouvé"}), 404
+
+    if "name" in data and not validate_length(data["name"], min_len=1, max_len=100):
         logger.warning(f"Nom de thème invalide (longueur) lors de modification: '{data['name']}'")
         return jsonify({"error": "Le nom doit avoir entre 1 et 100 caractères"}), 400
-    db = get_db()
+    if "accent_color" in data and not validate_accent_color(data["accent_color"]):
+        logger.warning(f"Couleur d'accent invalide rejetée lors de modification: '{data['accent_color']}'")
+        return jsonify({"error": "Couleur d'accent invalide"}), 400
+
+    name = data.get("name", theme["name"])
+    accent_color = data.get("accent_color", theme["accent_color"])
     try:
-        cursor = db.execute("UPDATE themes SET name = ? WHERE id = ?", (data["name"], theme_id))
+        db.execute("UPDATE themes SET name = ?, accent_color = ? WHERE id = ?", (name, accent_color, theme_id))
         db.commit()
-        if cursor.rowcount == 0:
-            logger.warning(f"✗ Thème {theme_id} non trouvé pour modification")
-            return jsonify({"error": "Thème non trouvé"}), 404
-        logger.info(f"✓ Thème {theme_id} modifié: '{data['name']}'")
-        return jsonify({"id": theme_id, "name": data["name"]}), 200
+        logger.info(f"✓ Thème {theme_id} modifié: '{name}' / {accent_color}")
+        return jsonify({"id": theme_id, "name": name, "accent_color": accent_color}), 200
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Thème {theme_id} dupliqué lors de la modification - {str(e)}")
         return jsonify({"error": "Ce nom de thème existe déjà"}), 409

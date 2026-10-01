@@ -60,9 +60,10 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const changeAccentColor = (color) => {
-    if (accentColors.includes(color)) {
-      setWatchAccent(watchTitle, color);
-    }
+    if (!accentColors.includes(color)) return;
+    setWatchAccent(watchTitle, color).catch((err) => {
+      console.error("Impossible d'enregistrer la couleur d'accent :", err.message);
+    });
   };
 
   return (
