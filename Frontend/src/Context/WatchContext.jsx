@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getThemes, createTheme, updateThemeAccent, deleteTheme } from '../api/themes'
+import { resetDatabase } from '../api/system'
 
 const WatchContext = createContext(null)
 
@@ -63,8 +64,14 @@ export function WatchProvider({ children }) {
     setWatchTitle((currentTitle) => (currentTitle === title ? '' : currentTitle))
   }
 
+  const resetAllData = async () => {
+    await resetDatabase()
+    setWatches([])
+    setWatchTitle('')
+  }
+
   return (
-    <WatchContext.Provider value={{ watchTitle, watches, loading, error, selectWatch, createWatch, getWatchAccent, setWatchAccent, deleteWatch }}>
+    <WatchContext.Provider value={{ watchTitle, watches, loading, error, selectWatch, createWatch, getWatchAccent, setWatchAccent, deleteWatch, resetAllData }}>
       {children}
     </WatchContext.Provider>
   )

@@ -3,8 +3,8 @@
   align-items: stretch;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse 58% 48% at 30% 42%, color-mix(in srgb, var(--accent-color, $accent-color) 12%, transparent) 0%, transparent 100%),
-    radial-gradient(ellipse 42% 34% at 20% 64%, color-mix(in srgb, var(--accent-color, $accent-color) 4%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 58% 48% at 30% 42%, color-mix(in srgb, var(--accent-color, $accent-color) var(--watch-gradient-opacity-1, 12%), transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 42% 34% at 20% 64%, color-mix(in srgb, var(--accent-color, $accent-color) var(--watch-gradient-opacity-2, 4%), transparent) 0%, transparent 100%),
     var(--bg-primary);
 }
 

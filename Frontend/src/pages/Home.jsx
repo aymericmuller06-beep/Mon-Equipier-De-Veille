@@ -11,7 +11,7 @@ export default function Home() {
         <div className="home">
             {/* Commun à toutes les veilles ; accueillera plus tard un espace de recherche */}
             <header className="veille-header">
-                <AccountMenu variant="inline" />
+                <AccountMenu variant="inline" sansTexte={true} />
             </header>
             <div className="home-content">
                 <h1>{watchTitle || 'Votre espace de veille'}</h1>

@@ -10,15 +10,18 @@ export default function ConfirmModal({
   confirmLabel = 'Confirmer',
   cancelLabel = 'Annuler',
   variant = 'default',
+  confirmPhrase,
 }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [typedPhrase, setTypedPhrase] = useState('')
 
   // Réinitialise l'état à chaque ouverture
   useEffect(() => {
     if (!isOpen) return
     setSubmitting(false)
     setError('')
+    setTypedPhrase('')
   }, [isOpen])
 
   useEffect(() => {
@@ -32,8 +35,11 @@ export default function ConfirmModal({
 
   if (!isOpen) return null
 
+  const isPhraseRequired = Boolean(confirmPhrase)
+  const isPhraseMatched = !isPhraseRequired || typedPhrase === confirmPhrase
+
   const handleConfirm = async () => {
-    if (submitting) return
+    if (submitting || !isPhraseMatched) return
     setSubmitting(true)
     setError('')
     try {
@@ -61,6 +67,23 @@ export default function ConfirmModal({
         </div>
 
         {message && <p className="confirm-modal-message">{message}</p>}
+
+        {isPhraseRequired && (
+          <div className="confirm-modal-phrase">
+            <label htmlFor="confirm-modal-phrase-input">
+              Pour confirmer, recopiez exactement : <strong>{confirmPhrase}</strong>
+            </label>
+            <input
+              id="confirm-modal-phrase-input"
+              type="text"
+              value={typedPhrase}
+              onChange={(event) => setTypedPhrase(event.target.value)}
+              autoComplete="off"
+              spellCheck="false"
+            />
+          </div>
+        )}
+
         {error && <p className="watch-selection-error">{error}</p>}
 
         <div className="watch-modal-actions">
@@ -71,7 +94,7 @@ export default function ConfirmModal({
             type="button"
             className={`watch-selection-submit ${variant === 'danger' ? 'watch-selection-submit--danger' : ''}`}
             onClick={handleConfirm}
-            disabled={submitting}
+            disabled={submitting || !isPhraseMatched}
           >
             {submitting ? 'Veuillez patienter…' : confirmLabel}
           </button>

@@ -390,3 +390,20 @@ def delete_tag(tag_id):
         return jsonify({"error": "Tag non trouvé"}), 404
     logger.info(f"✓ Tag {tag_id} supprimé")
     return jsonify({"message": f"Tag {tag_id} supprimé avec succès"}), 200
+
+# ==================== SYSTEME ====================
+@api.route("/system/reset", methods=["POST"])
+def reset_database():
+    """Vide toutes les tables de la base locale (reset complet, irréversible)."""
+    db = get_db()
+    # Les tables filles (FK ON DELETE CASCADE) sont vidées automatiquement via "themes",
+    # mais on nettoie explicitement chaque table pour ne rien laisser derrière.
+    db.execute("DELETE FROM article_tags")
+    db.execute("DELETE FROM articles")
+    db.execute("DELETE FROM sources")
+    db.execute("DELETE FROM tags")
+    db.execute("DELETE FROM themes")
+    db.execute("DELETE FROM sqlite_sequence")
+    db.commit()
+    logger.warning("⚠ Base de données réinitialisée : toutes les tables ont été vidées")
+    return jsonify({"message": "Base de données réinitialisée"}), 200

@@ -158,3 +158,10 @@
   font-size: $font-1;
   font-style: italic;
 }
+
+.account-menu-danger {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+}

@@ -94,6 +94,37 @@
   margin-bottom: $spacing-2;
 }
 
+.confirm-modal-phrase {
+  margin-bottom: $spacing-2;
+
+  label {
+    display: block;
+    margin-bottom: $spacing-1;
+    color: var(--text-primary);
+    font-size: $font-2;
+
+    strong {
+      color: $red-600;
+    }
+  }
+
+  input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: $spacing-2 $spacing-3;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-4;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    font: inherit;
+
+    &:focus {
+      border-color: $red-600;
+      outline: 2px solid color-mix(in srgb, $red-600 22%, transparent);
+    }
+  }
+}
+
 .watch-modal-swatch {
   width: 28px;
   height: 28px;

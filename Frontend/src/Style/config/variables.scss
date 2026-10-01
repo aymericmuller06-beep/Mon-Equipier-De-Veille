@@ -114,11 +114,13 @@ $gray-900: #111827;
 :root {
 	color-scheme: light;
 	--bg-primary: #{$gray-50};
-	--bg-secondary: #f9f9f9;
-	--bg-tertiary: #f1f1f1;
+	--bg-secondary: #{$gray-200};
+	--bg-tertiary: #{$gray-300};
 	--text-primary: #{$gray-900};
 	--text-secondary: #{$gray-600};
-	--border-color: #{$gray-200};
+	--border-color: #{$gray-400};
+	--watch-gradient-opacity-1: 20%;
+	--watch-gradient-opacity-2: 9%;
 }
 
 html.dark {
@@ -129,6 +131,8 @@ html.dark {
 	--text-primary: #{$gray-50};
 	--text-secondary: #{$gray-300};
 	--border-color: #{$gray-700};
+	--watch-gradient-opacity-1: 12%;
+	--watch-gradient-opacity-2: 4%;
 }
 
 // Accent Color (default: green; selected per watch in the interface)
