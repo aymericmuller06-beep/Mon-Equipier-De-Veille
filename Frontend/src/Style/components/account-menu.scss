@@ -1,0 +1,132 @@
+.account-menu {
+  position: fixed;
+  left: $spacing-4;
+  bottom: $spacing-4;
+  z-index: 200;
+}
+
+.account-menu-trigger {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 12rem;
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-3;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  box-shadow: $shadow-3;
+  font: inherit;
+  font-size: $font-4;
+  font-weight: $weight-6;
+  cursor: pointer;
+  transition: border-color $duration-fast ease, transform $duration-fast ease;
+
+  &:hover {
+    border-color: var(--accent-color, $accent-color);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-color, $accent-color);
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--accent-color, $accent-color);
+  }
+
+  .account-menu-avatar {
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: $radius-full;
+    object-fit: cover;
+  }
+
+  span {
+    margin-right: auto;
+  }
+}
+
+.account-menu-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + #{$spacing-2});
+  width: 18rem;
+  max-width: calc(100vw - #{$spacing-5});
+  padding: $spacing-3;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-3;
+  background-color: var(--bg-secondary);
+  box-shadow: $shadow-5;
+}
+
+.account-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-2;
+
+  h2 {
+    color: var(--text-primary);
+    font-size: $font-3;
+  }
+}
+
+.account-menu-close {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: $radius-3;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color $duration-fast ease, color $duration-fast ease;
+
+  &:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+  }
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+}
+
+.account-menu-description {
+  margin-bottom: $spacing-3;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  line-height: $line-height-2;
+}
+
+.account-menu-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.account-menu-label {
+  color: var(--text-primary);
+  font-size: $font-2;
+  font-weight: $weight-6;
+}
+
+.account-menu-note {
+  margin-top: $spacing-2;
+  padding-top: $spacing-2;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: $font-1;
+  font-style: italic;
+}

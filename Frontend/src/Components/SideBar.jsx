@@ -47,7 +47,7 @@ export default function SideBar() {
       ) : (
         <section className="sidebar-settings" aria-label="Paramètres de l’interface">
           <h3>Apparence</h3>
-          <p>Le thème est général ; la couleur d’accent s’applique uniquement à cette veille.</p>
+          <p>La couleur d’accent choisie ici s’applique uniquement à cette veille. Le thème clair/sombre se gère depuis l’espace « Compte » en bas à droite.</p>
           <ThemeToggle />
         </section>
       )}
