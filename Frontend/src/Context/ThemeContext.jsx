@@ -27,7 +27,7 @@ export const ThemeProvider = ({ children }) => {
   });
 
   // Le hub reste vert. L'accent propre à une veille ne s'applique que dans son espace.
-  const accentColor = pathname === '/veille' && watchTitle
+  const accentColor = pathname.startsWith('/veille') && watchTitle
     ? getWatchAccent(watchTitle)
     : 'green';
   const accentColors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];

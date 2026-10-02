@@ -1,0 +1,50 @@
+// Liste d'articles partagée entre Nouveaux articles / Articles validés / Corbeille
+.article-list {
+  display: grid;
+  gap: $spacing-2;
+}
+
+.article-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-4;
+  background-color: var(--bg-secondary);
+}
+
+.article-list-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+
+  a {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: $font-2;
+    font-weight: $weight-6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--accent-color, $accent-color);
+    }
+  }
+}
+
+.article-list-item-date {
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
+
+.article-list-item-reason {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -114,11 +114,11 @@ $gray-900: #111827;
 :root {
 	color-scheme: light;
 	--bg-primary: #{$gray-50};
-	--bg-secondary: #{$gray-200};
-	--bg-tertiary: #{$gray-300};
+	--bg-secondary: #{$gray-100};
+	--bg-tertiary: #{$gray-200};
 	--text-primary: #{$gray-900};
 	--text-secondary: #{$gray-600};
-	--border-color: #{$gray-400};
+	--border-color: #{$gray-300};
 	--watch-gradient-opacity-1: 20%;
 	--watch-gradient-opacity-2: 9%;
 }

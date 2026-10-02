@@ -3,6 +3,7 @@ import logging
 from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
+from rss import fetch_rss_entries
 
 logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
@@ -39,6 +40,19 @@ ACCENT_COLORS = {"red", "orange", "yellow", "green", "blue", "indigo", "violet"}
 def validate_accent_color(color):
     """Valide qu'une couleur d'accent fait partie des couleurs autorisées"""
     return color in ACCENT_COLORS
+
+ARTICLE_STATUSES = {"new", "validated", "trash"}
+
+def validate_status(status):
+    """Valide qu'un statut d'article fait partie des statuts autorisés"""
+    return status in ARTICLE_STATUSES
+
+# Chaque outil ajouté dans la page "Ajouter un outil" doit déclarer son type ici
+TOOL_TYPES = {"rss", "google_alerts"}
+
+def validate_tool_type(tool_type):
+    """Valide qu'un type d'outil fait partie des types connus"""
+    return tool_type in TOOL_TYPES
 
 
 @api.route("/")
@@ -132,7 +146,22 @@ def delete_theme(theme_id):
 @api.route("/sources", methods=["GET"])
 def get_sources():
     db = get_db()
-    cursor = db.execute("SELECT * FROM sources")
+    theme_id = request.args.get("theme_id")
+    tool_type = request.args.get("tool_type")
+
+    query = "SELECT * FROM sources"
+    conditions = []
+    params = []
+    if theme_id:
+        conditions.append("theme_id = ?")
+        params.append(theme_id)
+    if tool_type:
+        conditions.append("tool_type = ?")
+        params.append(tool_type)
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    cursor = db.execute(query, params)
     return jsonify([dict(row) for row in cursor.fetchall()])
 
 @api.route("/sources", methods=["POST"])
@@ -150,19 +179,24 @@ def add_source():
     if not id_exists("themes", data["theme_id"]):
         logger.warning(f"Tentative créer source avec theme_id inexistant: {data['theme_id']}")
         return jsonify({"error": "Thème inexistant"}), 404
+    tool_type = data.get("tool_type", "rss")
+    if not validate_tool_type(tool_type):
+        logger.warning(f"Type d'outil invalide rejeté: '{tool_type}'")
+        return jsonify({"error": "Type d'outil invalide"}), 400
     db = get_db()
     try:
         cursor = db.execute(
-            "INSERT INTO sources (name, url, theme_id) VALUES (?, ?, ?)",
-            (data["name"], data["url"], data["theme_id"])
+            "INSERT INTO sources (name, url, theme_id, tool_type) VALUES (?, ?, ?, ?)",
+            (data["name"], data["url"], data["theme_id"], tool_type)
         )
         db.commit()
-        logger.info(f"✓ Source créée: '{data['name']}' (ID: {cursor.lastrowid}, theme_id: {data['theme_id']})")
+        logger.info(f"✓ Source créée: '{data['name']}' (ID: {cursor.lastrowid}, theme_id: {data['theme_id']}, tool_type: {tool_type})")
         return jsonify({
             "id": cursor.lastrowid,
             "name": data["name"],
             "url": data["url"],
-            "theme_id": data["theme_id"]
+            "theme_id": data["theme_id"],
+            "tool_type": tool_type
         }), 201
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur création source '{data['name']}': {str(e)}")
@@ -184,20 +218,69 @@ def update_source(source_id):
         logger.warning(f"Tentative modifier source {source_id} avec theme_id inexistant: {data['theme_id']}")
         return jsonify({"error": "Thème inexistant"}), 404
     db = get_db()
+    existing_source = db.execute("SELECT tool_type FROM sources WHERE id = ?", (source_id,)).fetchone()
+    tool_type = data.get("tool_type", existing_source["tool_type"] if existing_source else "rss")
+    if not validate_tool_type(tool_type):
+        logger.warning(f"Type d'outil invalide rejeté lors de modification: '{tool_type}'")
+        return jsonify({"error": "Type d'outil invalide"}), 400
     try:
         cursor = db.execute(
-            "UPDATE sources SET name = ?, url = ?, theme_id = ? WHERE id = ?",
-            (data["name"], data["url"], data["theme_id"], source_id)
+            "UPDATE sources SET name = ?, url = ?, theme_id = ?, tool_type = ? WHERE id = ?",
+            (data["name"], data["url"], data["theme_id"], tool_type, source_id)
         )
         db.commit()
         if cursor.rowcount == 0:
             logger.warning(f"✗ Source {source_id} non trouvée pour modification")
             return jsonify({"error": "Source non trouvée"}), 404
         logger.info(f"✓ Source {source_id} modifiée: '{data['name']}'")
-        return jsonify({"id": source_id, "name": data["name"], "url": data["url"], "theme_id": data["theme_id"]}), 200
+        return jsonify({"id": source_id, "name": data["name"], "url": data["url"], "theme_id": data["theme_id"], "tool_type": tool_type}), 200
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur modification source {source_id}: {str(e)}")
         return jsonify({"error": "Source en doublon"}), 400
+
+@api.route("/sources/<int:source_id>/sync", methods=["POST"])
+def sync_source(source_id):
+    db = get_db()
+    source = db.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone()
+    if source is None:
+        logger.warning(f"✗ Source {source_id} non trouvée pour synchronisation")
+        return jsonify({"error": "Source non trouvée"}), 404
+
+    try:
+        entries = fetch_rss_entries(source["url"])
+    except Exception as e:
+        logger.warning(f"✗ Erreur de lecture du flux RSS pour la source {source_id}: {str(e)}")
+        return jsonify({"error": "Impossible de lire ce flux RSS. Vérifiez l'URL."}), 502
+
+    # Les articles déjà importés depuis cette source ne sont pas réinsérés
+    existing_urls = {row["url"] for row in db.execute(
+        "SELECT url FROM articles WHERE source_id = ?", (source_id,)
+    ).fetchall()}
+
+    inserted = []
+    for entry in entries:
+        if entry["url"] in existing_urls:
+            continue
+        cursor = db.execute(
+            "INSERT INTO articles (title, url, published_at, source_id) VALUES (?, ?, ?, ?)",
+            (entry["title"], entry["url"], entry["published_at"], source_id)
+        )
+        inserted.append({
+            "id": cursor.lastrowid,
+            "title": entry["title"],
+            "url": entry["url"],
+            "published_at": entry["published_at"],
+        })
+        existing_urls.add(entry["url"])
+
+    db.commit()
+    logger.info(f"✓ Synchronisation source {source_id}: {len(inserted)} nouvel(s) article(s) sur {len(entries)} trouvés dans le flux")
+    return jsonify({
+        "source_id": source_id,
+        "fetched": len(entries),
+        "inserted": len(inserted),
+        "articles": inserted,
+    }), 200
 
 @api.route("/sources/<int:source_id>", methods=["DELETE"])
 def delete_source(source_id):
@@ -214,8 +297,50 @@ def delete_source(source_id):
 @api.route("/articles", methods=["GET"])
 def get_articles():
     db = get_db()
-    cursor = db.execute("SELECT * FROM articles")
+    theme_id = request.args.get("theme_id")
+    status = request.args.get("status")
+
+    query = "SELECT articles.* FROM articles"
+    conditions = []
+    params = []
+    if theme_id:
+        query += " JOIN sources ON sources.id = articles.source_id"
+        conditions.append("sources.theme_id = ?")
+        params.append(theme_id)
+    if status:
+        conditions.append("articles.status = ?")
+        params.append(status)
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    query += " ORDER BY articles.id DESC"
+
+    cursor = db.execute(query, params)
     return jsonify([dict(row) for row in cursor.fetchall()])
+
+@api.route("/articles/<int:article_id>/status", methods=["PATCH"])
+def update_article_status(article_id):
+    data = request.get_json()
+    if not data or "status" not in data:
+        logger.warning(f"Tentative de modifier le statut de l'article {article_id} sans 'status'")
+        return jsonify({"error": "Le champ 'status' est requis"}), 400
+    if not validate_status(data["status"]):
+        logger.warning(f"Statut invalide rejeté pour l'article {article_id}: '{data['status']}'")
+        return jsonify({"error": "Statut invalide"}), 400
+    reason = data.get("reason") or ""
+    if not validate_length(reason, min_len=0, max_len=500):
+        logger.warning(f"Raison de statut invalide (longueur) pour l'article {article_id}")
+        return jsonify({"error": "La raison doit faire au maximum 500 caractères"}), 400
+    db = get_db()
+    cursor = db.execute(
+        "UPDATE articles SET status = ?, status_reason = ? WHERE id = ?",
+        (data["status"], reason, article_id)
+    )
+    db.commit()
+    if cursor.rowcount == 0:
+        logger.warning(f"✗ Article {article_id} non trouvé pour changement de statut")
+        return jsonify({"error": "Article non trouvé"}), 404
+    logger.info(f"✓ Article {article_id} statut -> '{data['status']}'")
+    return jsonify({"id": article_id, "status": data["status"], "status_reason": reason}), 200
 
 @api.route("/articles", methods=["POST"])
 def add_article():

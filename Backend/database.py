@@ -45,9 +45,15 @@ def init_db(app):
                 name TEXT NOT NULL,
                 url TEXT NOT NULL,
                 theme_id INTEGER,
+                tool_type TEXT NOT NULL DEFAULT 'rss',
                 FOREIGN KEY (theme_id) REFERENCES themes (id) ON DELETE CASCADE
             )
         """)
+
+        # Migration pour les bases créées avant l'ajout de tool_type
+        source_columns = [row["name"] for row in db.execute("PRAGMA table_info(sources)").fetchall()]
+        if "tool_type" not in source_columns:
+            db.execute("ALTER TABLE sources ADD COLUMN tool_type TEXT NOT NULL DEFAULT 'rss'")
         
         db.execute("""
             CREATE TABLE IF NOT EXISTS articles (
@@ -56,10 +62,19 @@ def init_db(app):
                 url TEXT NOT NULL,
                 published_at TEXT,
                 source_id INTEGER,
+                status TEXT NOT NULL DEFAULT 'new',
+                status_reason TEXT,
                 FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
             )
         """)
-        
+
+        # Migration pour les bases créées avant l'ajout du statut des articles
+        article_columns = [row["name"] for row in db.execute("PRAGMA table_info(articles)").fetchall()]
+        if "status" not in article_columns:
+            db.execute("ALTER TABLE articles ADD COLUMN status TEXT NOT NULL DEFAULT 'new'")
+        if "status_reason" not in article_columns:
+            db.execute("ALTER TABLE articles ADD COLUMN status_reason TEXT")
+
         db.execute("""
             CREATE TABLE IF NOT EXISTS tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

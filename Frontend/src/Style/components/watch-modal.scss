@@ -70,7 +70,8 @@
     margin-top: $spacing-2;
   }
 
-  input {
+  input,
+  textarea {
     width: 100%;
     min-height: 2.75rem;
     padding: $spacing-2 $spacing-3;
@@ -84,6 +85,10 @@
       border-color: var(--accent-color, $accent-color);
       outline: 2px solid color-mix(in srgb, var(--accent-color, $accent-color) 22%, transparent);
     }
+  }
+
+  textarea {
+    resize: vertical;
   }
 }
 
@@ -201,3 +206,23 @@
     outline-color: $red-600;
   }
 }
+
+.google-alert-modal {
+  width: min(100%, 30rem);
+}
+
+.google-alert-tuto {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  margin-bottom: $spacing-3;
+  padding-left: $spacing-4;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  line-height: $line-height-2;
+
+  a {
+    color: var(--accent-color, $accent-color);
+  }
+}
+

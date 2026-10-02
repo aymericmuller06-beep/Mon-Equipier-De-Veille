@@ -3,10 +3,12 @@ import { getThemes, createTheme, updateThemeAccent, deleteTheme } from '../api/t
 import { resetDatabase } from '../api/system'
 
 const WatchContext = createContext(null)
+const WATCH_TITLE_STORAGE_KEY = 'watchTitle'
 
 export function WatchProvider({ children }) {
   const [watches, setWatches] = useState([])
-  const [watchTitle, setWatchTitle] = useState('')
+  // Persistée pour survivre à un rechargement de page (sinon /veille/* retombe sans veille sélectionnée)
+  const [watchTitle, setWatchTitle] = useState(() => localStorage.getItem(WATCH_TITLE_STORAGE_KEY) || '')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -21,6 +23,14 @@ export function WatchProvider({ children }) {
 
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    if (watchTitle) {
+      localStorage.setItem(WATCH_TITLE_STORAGE_KEY, watchTitle)
+    } else {
+      localStorage.removeItem(WATCH_TITLE_STORAGE_KEY)
+    }
+  }, [watchTitle])
 
   const selectWatch = async (title) => {
     const cleanTitle = title.trim()
@@ -44,6 +54,9 @@ export function WatchProvider({ children }) {
     const watch = watches.find((item) => item.name === title)
     return watch?.accent_color || 'green'
   }
+
+  // Thème backend correspondant à la veille actuellement ouverte
+  const currentWatch = watches.find((item) => item.name === watchTitle) || null
 
   const setWatchAccent = async (title, color) => {
     const watch = watches.find((item) => item.name === title)
@@ -71,7 +84,7 @@ export function WatchProvider({ children }) {
   }
 
   return (
-    <WatchContext.Provider value={{ watchTitle, watches, loading, error, selectWatch, createWatch, getWatchAccent, setWatchAccent, deleteWatch, resetAllData }}>
+    <WatchContext.Provider value={{ watchTitle, watches, currentWatch, loading, error, selectWatch, createWatch, getWatchAccent, setWatchAccent, deleteWatch, resetAllData }}>
       {children}
     </WatchContext.Provider>
   )
