@@ -5,11 +5,14 @@ import { ThemeToggle } from './ThemeToggle'
 import { useWatch } from '../Context/WatchContext'
 import { getSources } from '../api/sources'
 
+// Mémorise par veille la présence d'alertes pour éviter tout délai d'affichage quand la barre est recréée
+const googleAlertsCache = new Map()
+
 export default function SideBar() {
   const [activePanel, setActivePanel] = useState('menu')
   const { watchTitle, currentWatch } = useWatch()
   const { pathname } = useLocation()
-  const [hasGoogleAlerts, setHasGoogleAlerts] = useState(false)
+  const [hasGoogleAlerts, setHasGoogleAlerts] = useState(() => (currentWatch ? googleAlertsCache.get(currentWatch.id) ?? false : false))
 
   // La catégorie "Outils" ne doit apparaître que si au moins un outil a été ajouté
   useEffect(() => {
@@ -18,10 +21,15 @@ export default function SideBar() {
       return
     }
     let cancelled = false
+    setHasGoogleAlerts(googleAlertsCache.get(currentWatch.id) ?? false)
 
     getSources(currentWatch.id, 'google_alerts')
-      .then((data) => { if (!cancelled) setHasGoogleAlerts(data.length > 0) })
-      .catch(() => { if (!cancelled) setHasGoogleAlerts(false) })
+      .then((data) => {
+        const has = data.length > 0
+        googleAlertsCache.set(currentWatch.id, has)
+        if (!cancelled) setHasGoogleAlerts(has)
+      })
+      .catch(() => {})
 
     return () => { cancelled = true }
   }, [currentWatch, pathname])
@@ -89,6 +97,17 @@ export default function SideBar() {
             </li>
           </ul>
 
+          <span className="sidebar-nav-separator" role="separator" />
+
+          <ul>
+            <li>
+              <Link className={linkClass('/veille/ajouter-un-outil')} to="/veille/ajouter-un-outil" aria-current={pathname === '/veille/ajouter-un-outil' ? 'page' : undefined}>
+                <PlusCircle aria-hidden="true" />
+                <span>Ajouter un outil</span>
+              </Link>
+            </li>
+          </ul>
+
           {hasGoogleAlerts && (
             <>
               <span className="sidebar-nav-separator" role="separator" />
@@ -104,17 +123,6 @@ export default function SideBar() {
               </ul>
             </>
           )}
-
-          <span className="sidebar-nav-separator" role="separator" />
-
-          <ul>
-            <li>
-              <Link className={linkClass('/veille/ajouter-un-outil')} to="/veille/ajouter-un-outil" aria-current={pathname === '/veille/ajouter-un-outil' ? 'page' : undefined}>
-                <PlusCircle aria-hidden="true" />
-                <span>Ajouter un outil</span>
-              </Link>
-            </li>
-          </ul>
         </nav>
       ) : (
         <section className="sidebar-settings" aria-label="Paramètres de l’interface">

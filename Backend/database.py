@@ -70,6 +70,10 @@ def init_db(app):
 
         # Migration pour les bases créées avant l'ajout du statut des articles
         article_columns = [row["name"] for row in db.execute("PRAGMA table_info(articles)").fetchall()]
+        if "source_id" not in article_columns:
+            db.execute("ALTER TABLE articles ADD COLUMN source_id INTEGER REFERENCES sources (id) ON DELETE CASCADE")
+        if "published_at" not in article_columns:
+            db.execute("ALTER TABLE articles ADD COLUMN published_at TEXT")
         if "status" not in article_columns:
             db.execute("ALTER TABLE articles ADD COLUMN status TEXT NOT NULL DEFAULT 'new'")
         if "status_reason" not in article_columns:

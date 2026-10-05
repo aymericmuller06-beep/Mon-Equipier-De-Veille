@@ -59,12 +59,24 @@ export default function GoogleAlertModal({ isOpen, onClose, onCreate }) {
 
         <ol className="google-alert-tuto">
           <li>Rendez-vous sur <a href="https://www.google.com/alerts" target="_blank" rel="noreferrer">google.com/alerts</a> et connectez-vous.</li>
-          <li>Saisissez le sujet ou mot-clé à surveiller dans le champ de recherche.</li>
-          <li>Cliquez sur « Afficher les options » pour dérouler les réglages avancés.</li>
-          <li>Dans « Envoyer par », choisissez <strong>Flux RSS</strong> (au lieu de E-mail).</li>
-          <li>Cliquez sur « Créer l'alerte », puis sur l'icône RSS qui apparaît à côté de votre nouvelle alerte pour en copier l'URL.</li>
-          <li>Collez cette URL ci-dessous.</li>
+          <li>Saisissez le sujet ou mot-clé à surveiller dans le champ de recherche (privilégiez une requête simple : trop de termes = peu de résultats).</li>
+          <li>Cliquez sur « Afficher les options » et réglez :
+            <ul>
+              <li><strong>Fréquence</strong> : « Au fur et à mesure »</li>
+              <li><strong>Sources</strong> : « Automatique » (ou celles de votre choix)</li>
+              <li><strong>Langue</strong> et <strong>Région</strong> : selon vos besoins</li>
+              <li><strong>Nombre</strong> : « Tous les résultats »</li>
+              <li><strong>Envoyer à</strong> : <strong>Flux RSS</strong> (au lieu de votre adresse e-mail)</li>
+            </ul>
+          </li>
+          <li>Cliquez sur « Créer l'alerte ».</li>
+          <li>Dans la liste « Mes alertes », cliquez sur l'icône RSS à côté de l'alerte : une page s'ouvre.</li>
+          <li>Copiez l'URL de cette page. Elle doit ressembler à <code>https://www.google.com/alerts/feeds/…/…</code>.</li>
+          <li>Collez cette URL ci-dessous, puis cliquez sur « Ajouter et synchroniser ».</li>
         </ol>
+        <p className="google-alert-tuto-note">
+          Le flux se remplit au fur et à mesure : un flux vide juste après la création est normal. Relancez la synchronisation plus tard depuis la page Google Alerts.
+        </p>
 
         <form className="watch-modal-form" onSubmit={handleSubmit}>
           <label htmlFor="google-alert-name">Nom de l'alerte</label>

@@ -1,7 +1,8 @@
 import { apiFetch } from './client'
 
-export function getArticles({ themeId, status } = {}) {
+export function getArticles({ themeId, status, sourceId } = {}) {
   const params = new URLSearchParams()
+  if (sourceId) params.set('source_id', sourceId)
   if (themeId) params.set('theme_id', themeId)
   if (status) params.set('status', status)
   const query = params.toString() ? `?${params.toString()}` : ''

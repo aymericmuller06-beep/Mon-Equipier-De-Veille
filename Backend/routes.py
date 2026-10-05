@@ -134,6 +134,9 @@ def update_theme(theme_id):
 @api.route("/themes/<int:theme_id>", methods=["DELETE"])
 def delete_theme(theme_id):
     db = get_db()
+    # Suppression explicite des données liées (anciennes bases sans ON DELETE CASCADE)
+    db.execute("DELETE FROM articles WHERE source_id IN (SELECT id FROM sources WHERE theme_id = ?)", (theme_id,))
+    db.execute("DELETE FROM sources WHERE theme_id = ?", (theme_id,))
     cursor = db.execute("DELETE FROM themes WHERE id = ?", (theme_id,))
     db.commit()
     if cursor.rowcount == 0:
@@ -163,6 +166,14 @@ def get_sources():
 
     cursor = db.execute(query, params)
     return jsonify([dict(row) for row in cursor.fetchall()])
+
+@api.route("/sources/<int:source_id>", methods=["GET"])
+def get_source(source_id):
+    db = get_db()
+    source = db.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone()
+    if source is None:
+        return jsonify({"error": "Source non trouvée"}), 404
+    return jsonify(dict(source))
 
 @api.route("/sources", methods=["POST"])
 def add_source():
@@ -285,6 +296,7 @@ def sync_source(source_id):
 @api.route("/sources/<int:source_id>", methods=["DELETE"])
 def delete_source(source_id):
     db = get_db()
+    db.execute("DELETE FROM articles WHERE source_id = ?", (source_id,))
     cursor = db.execute("DELETE FROM sources WHERE id = ?", (source_id,))
     db.commit()
     if cursor.rowcount == 0:
@@ -299,10 +311,14 @@ def get_articles():
     db = get_db()
     theme_id = request.args.get("theme_id")
     status = request.args.get("status")
+    source_id = request.args.get("source_id")
 
     query = "SELECT articles.* FROM articles"
     conditions = []
     params = []
+    if source_id:
+        conditions.append("articles.source_id = ?")
+        params.append(source_id)
     if theme_id:
         query += " JOIN sources ON sources.id = articles.source_id"
         conditions.append("sources.theme_id = ?")

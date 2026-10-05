@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bell, Sparkles } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import VeilleLayout from '../Components/VeilleLayout'
 import GoogleAlertModal from '../Components/GoogleAlertModal'
 import { useWatch } from '../Context/WatchContext'
@@ -8,14 +8,21 @@ import { createSource, syncSource } from '../api/sources'
 
 export default function AddTool() {
   const { currentWatch } = useWatch()
+  const navigate = useNavigate()
   const [isGoogleAlertOpen, setGoogleAlertOpen] = useState(false)
   const [syncMessage, setSyncMessage] = useState('')
 
   const handleCreateGoogleAlert = async (name, url) => {
     const created = await createSource(name, url, currentWatch.id, 'google_alerts')
-    const result = await syncSource(created.id)
-    setSyncMessage(`${result.inserted} nouvel(s) article(s) importé(s) depuis « ${created.name} » (${result.fetched} trouvés dans le flux).`)
+    let syncResult = null
+    let syncError = ''
+    try {
+      syncResult = await syncSource(created.id)
+    } catch (err) {
+      syncError = err.message
+    }
     setGoogleAlertOpen(false)
+    navigate('/veille/outils/google-alerts', { state: { syncResult, syncError } })
   }
 
   return (

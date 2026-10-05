@@ -8,6 +8,10 @@ export function getSources(themeId, toolType) {
   return apiFetch(`/sources${query}`)
 }
 
+export function getSource(sourceId) {
+  return apiFetch(`/sources/${sourceId}`)
+}
+
 export function createSource(name, url, themeId, toolType = 'rss') {
   return apiFetch('/sources', {
     method: 'POST',
