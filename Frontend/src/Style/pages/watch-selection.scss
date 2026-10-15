@@ -163,20 +163,13 @@
   }
 }
 
+// Pastille de la couleur de la veille
 .watch-list-radio {
-  display: grid;
-  place-items: center;
-  flex: 0 0 2rem;
-  width: 2rem;
-  height: 2rem;
-  border-radius: $radius-3;
-  color: var(--accent-color, $accent-color);
-  background-color: color-mix(in srgb, var(--accent-color, $accent-color) 12%, var(--bg-secondary));
-
-  svg {
-    width: 1rem;
-    height: 1rem;
-  }
+  flex: 0 0 0.75rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: $radius-full;
+  background-color: var(--accent-color, $accent-color);
 }
 
 // Chaque veille affiche sa propre couleur d'accent, indépendamment du thème général
@@ -192,8 +185,7 @@ $watch-accent-colors: (
 
 @each $name, $value in $watch-accent-colors {
   .watch-list-radio--#{$name} {
-    color: #{$value};
-    background-color: color-mix(in srgb, #{$value} 14%, var(--bg-secondary));
+    background-color: #{$value};
   }
 
   .watch-list-item--#{$name} {

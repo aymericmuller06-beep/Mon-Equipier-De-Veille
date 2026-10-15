@@ -1,8 +1,7 @@
-import { createContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useWatch } from './WatchContext';
-
-export const ThemeContext = createContext();
+import { useWatch } from './useWatch';
+import { ThemeContext } from './useTheme';
 
 const accentPalette = {
   red: { color: '#ef4444', light: '#fee2e2', dark: '#7f1d1d' },
@@ -15,7 +14,7 @@ const accentPalette = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const { watchTitle, getWatchAccent, setWatchAccent } = useWatch();
+  const { currentWatch, setWatchAccent } = useWatch();
   const { pathname } = useLocation();
 
   // Mode light/dark
@@ -27,8 +26,8 @@ export const ThemeProvider = ({ children }) => {
   });
 
   // Le hub reste vert. L'accent propre à une veille ne s'applique que dans son espace.
-  const accentColor = pathname.startsWith('/veille') && watchTitle
-    ? getWatchAccent(watchTitle)
+  const accentColor = pathname.startsWith('/veille') && currentWatch
+    ? currentWatch.accent_color || 'green'
     : 'green';
   const accentColors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
 
@@ -60,8 +59,8 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const changeAccentColor = (color) => {
-    if (!accentColors.includes(color)) return;
-    setWatchAccent(watchTitle, color).catch((err) => {
+    if (!accentColors.includes(color) || !currentWatch) return;
+    setWatchAccent(currentWatch.id, color).catch((err) => {
       console.error("Impossible d'enregistrer la couleur d'accent :", err.message);
     });
   };

@@ -1,0 +1,277 @@
+// Dashboard d'une veille : tient sur un écran d'ordinateur
+.dash {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-3;
+}
+
+.dash-kpis {
+  grid-area: kpis;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: $spacing-3;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: $spacing-3;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-4;
+  background-color: var(--bg-secondary);
+
+  &--highlight {
+    border-color: var(--accent-color, $accent-color);
+    background-color: color-mix(in srgb, var(--accent-color, $accent-color) 10%, var(--bg-secondary));
+  }
+}
+
+.kpi-value {
+  color: var(--text-primary);
+  font-size: $font-7;
+  font-weight: $weight-7;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  color: var(--text-secondary);
+  font-size: $font-2;
+  font-weight: $weight-6;
+}
+
+.kpi-hint {
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
+
+.dash-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: $spacing-3;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-5;
+  background-color: var(--bg-secondary);
+
+  h2 {
+    margin-bottom: $spacing-2;
+    color: var(--text-primary);
+    font-size: $font-3;
+  }
+
+  > :not(h2):not(.dash-card-head) {
+    min-height: 0;
+  }
+
+  &--donut { grid-area: donut; }
+  &--days { grid-area: days; }
+  &--sources { grid-area: sources; }
+  &--todo { grid-area: todo; }
+  &--side { grid-area: side; }
+
+  &--sources .source-bars,
+  &--todo .dash-todo,
+  &--side {
+    overflow-y: auto;
+  }
+
+  &--days .columns-chart {
+    flex: 1;
+  }
+
+  &--sources .source-bars {
+    flex: 1;
+  }
+}
+
+.home-content .dash-card h2.dash-card-subtitle {
+  margin-top: $spacing-3;
+}
+
+.dash-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $spacing-2;
+
+  a {
+    font-size: $font-2;
+    font-weight: $weight-6;
+  }
+}
+
+.dash-todo {
+  display: grid;
+  align-content: start;
+  gap: $spacing-1;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-2;
+    border-radius: $radius-4;
+
+    &:hover {
+      background-color: var(--bg-tertiary);
+    }
+  }
+}
+
+.dash-todo-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  a {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: $font-2;
+    font-weight: $weight-6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--accent-color, $accent-color);
+    }
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: $font-1;
+  }
+}
+
+.dash-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    padding: 2px 4px 2px $spacing-2;
+    border-radius: $radius-full;
+    color: var(--text-primary);
+    background-color: color-mix(in srgb, var(--accent-color, $accent-color) 16%, var(--bg-secondary));
+    font-size: $font-1;
+    font-weight: $weight-6;
+
+    span {
+      min-width: 1.25rem;
+      padding: 0 4px;
+      border-radius: $radius-full;
+      background-color: var(--bg-primary);
+      text-align: center;
+    }
+  }
+}
+
+.dash-validated {
+  display: grid;
+  gap: $spacing-2;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding-left: $spacing-2;
+    border-left: 3px solid var(--viz-validated);
+  }
+
+  a {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: $font-2;
+    font-weight: $weight-6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: $font-1;
+    font-style: italic;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.dash-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  max-width: 32rem;
+  margin: $spacing-6 auto;
+  padding: $spacing-5;
+  border: 1px dashed var(--border-color);
+  border-radius: $radius-6;
+  text-align: center;
+
+  h2 {
+    color: var(--text-primary);
+    font-size: $font-5;
+  }
+
+  a.watch-selection-submit {
+    margin-top: $spacing-2;
+    text-decoration: none;
+  }
+}
+
+// Écran d'ordinateur : grille sur une seule page, sans défilement
+@media (min-width: $breakpoint-md) {
+  .dash {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'kpis kpis'
+      'donut sources'
+      'days days'
+      'todo todo'
+      'side side';
+  }
+}
+
+@media (min-width: $breakpoint-lg) and (min-height: 640px) {
+  .home:has(.dash) {
+    height: 100vh;
+  }
+
+  .home-content:has(.dash) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-top: $spacing-3;
+    padding-bottom: $spacing-3;
+    overflow: hidden;
+  }
+
+  .dash {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'kpis kpis kpis'
+      'donut days sources'
+      'todo todo side';
+  }
+
+  .dash-card {
+    overflow: hidden;
+  }
+
+  .dash-kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}

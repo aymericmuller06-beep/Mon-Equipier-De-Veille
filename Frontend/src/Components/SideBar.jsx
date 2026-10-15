@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, LayoutGrid, Settings2, LayoutDashboard, Inbox, CheckCircle2, Trash2, PlusCircle, Bell } from 'lucide-react'
+import { Home, LayoutGrid, Settings2, LayoutDashboard, Inbox, CheckCircle2, Trash2, PlusCircle } from 'lucide-react'
+import GoogleLogo from './GoogleLogo'
 import { ThemeToggle } from './ThemeToggle'
-import { useWatch } from '../Context/WatchContext'
+import { useWatch } from '../Context/useWatch'
 import { getSources } from '../api/sources'
 
 // Mémorise par veille la présence d'alertes pour éviter tout délai d'affichage quand la barre est recréée
@@ -12,22 +13,19 @@ export default function SideBar() {
   const [activePanel, setActivePanel] = useState('menu')
   const { watchTitle, currentWatch } = useWatch()
   const { pathname } = useLocation()
-  const [hasGoogleAlerts, setHasGoogleAlerts] = useState(() => (currentWatch ? googleAlertsCache.get(currentWatch.id) ?? false : false))
+  const [hasAlertsByWatch, setHasAlertsByWatch] = useState(() => Object.fromEntries(googleAlertsCache))
+  const hasGoogleAlerts = currentWatch ? hasAlertsByWatch[currentWatch.id] ?? false : false
 
   // La catégorie "Outils" ne doit apparaître que si au moins un outil a été ajouté
   useEffect(() => {
-    if (!currentWatch) {
-      setHasGoogleAlerts(false)
-      return
-    }
+    if (!currentWatch) return
     let cancelled = false
-    setHasGoogleAlerts(googleAlertsCache.get(currentWatch.id) ?? false)
 
     getSources(currentWatch.id, 'google_alerts')
       .then((data) => {
         const has = data.length > 0
         googleAlertsCache.set(currentWatch.id, has)
-        if (!cancelled) setHasGoogleAlerts(has)
+        if (!cancelled) setHasAlertsByWatch((current) => ({ ...current, [currentWatch.id]: has }))
       })
       .catch(() => {})
 
@@ -116,7 +114,7 @@ export default function SideBar() {
               <ul>
                 <li>
                   <Link className={linkClass('/veille/outils/google-alerts')} to="/veille/outils/google-alerts" aria-current={pathname === '/veille/outils/google-alerts' ? 'page' : undefined}>
-                    <Bell aria-hidden="true" />
+                    <GoogleLogo size={18} />
                     <span>Google Alerts</span>
                   </Link>
                 </li>

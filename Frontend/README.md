@@ -1,31 +1,12 @@
 # Frontend
 
-Interface web développée avec React et Vite.
-
-## Installation et démarrage
-
-Prérequis : Node.js et npm. Depuis le dossier `Frontend/` :
+Interface web en React + Vite.
 
 ```bash
 npm ci
-npm run dev
+npm run dev     # serveur de développement sur http://localhost:5173
+npm run lint    # vérification du code
+npm run build   # build de production dans dist/
 ```
 
-Ouvrez l'adresse affichée dans le terminal (par défaut <http://localhost:5173>).
-
-## Avec Docker
-
-Depuis la racine du projet, démarrez l'application :
-
-```bash
-docker compose up --build
-```
-
-L'interface est disponible sur <http://localhost:3000>.
-
-Vérification et build de production :
-
-```bash
-npm run lint
-npm run build
-```
+L'adresse de l'API est lue dans `VITE_API_URL` (copiez `.env.example` en `.env` si besoin). Elle est intégrée au moment du build : en Docker, elle se règle dans `docker-compose.yml` (`args`).

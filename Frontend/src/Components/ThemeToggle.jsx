@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../Context/useTheme';
-import { useWatch } from '../Context/WatchContext';
-import { Trash2 } from 'lucide-react';
+import { useWatch } from '../Context/useWatch';
 import ConfirmModal from './ConfirmModal';
 
 export const ThemeToggle = () => {
   const { accentColor, changeAccentColor, accentColors } = useTheme();
-  const { watchTitle, deleteWatch } = useWatch();
+  const { currentWatch, watchTitle, deleteWatch } = useWatch();
   const navigate = useNavigate();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handleDelete = async () => {
-    await deleteWatch(watchTitle);
+    await deleteWatch(currentWatch.id);
     setIsConfirmOpen(false);
     navigate('/');
   };
@@ -46,9 +45,8 @@ export const ThemeToggle = () => {
           type="button"
           className="theme-toggle__delete"
           onClick={() => setIsConfirmOpen(true)}
-          disabled={!watchTitle}
+          disabled={!currentWatch}
         >
-          <Trash2 aria-hidden="true" />
           Supprimer cette veille
         </button>
       </div>

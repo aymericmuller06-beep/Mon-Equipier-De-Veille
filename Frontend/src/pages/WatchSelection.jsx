@@ -1,23 +1,17 @@
 import { useState } from 'react'
-import { ArrowRight, Plus, Radio } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useWatch } from '../Context/WatchContext'
+import { useWatch } from '../Context/useWatch'
 import CreateWatchModal from '../Components/CreateWatchModal'
 import AccountMenu from '../Components/AccountMenu'
 
 export default function WatchSelection() {
   const { watches, loading, error, selectWatch, createWatch } = useWatch()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [actionError, setActionError] = useState('')
   const navigate = useNavigate()
 
-  const openWatch = async (watch) => {
-    try {
-      await selectWatch(watch)
-      navigate('/veille')
-    } catch (err) {
-      setActionError(err.message)
-    }
+  const openWatch = (id) => {
+    selectWatch(id)
+    navigate('/veille')
   }
 
   const handleCreate = async (title, description, accentColor) => {
@@ -35,10 +29,8 @@ export default function WatchSelection() {
           Ouvrez une veille déjà créée ou démarrez-en une nouvelle.
         </p>
 
-        {actionError && <p className="watch-selection-error">{actionError}</p>}
-
         <button className="watch-selection-submit" type="button" onClick={() => setIsModalOpen(true)}>
-          Nouvelle veille <Plus aria-hidden="true" />
+          + Nouvelle veille
         </button>
       </div>
 
@@ -62,19 +54,17 @@ export default function WatchSelection() {
                 <button
                   className={`watch-list-item watch-list-item--${watch.accent_color || 'green'}`}
                   type="button"
-                  onClick={() => openWatch(watch.name)}
+                  onClick={() => openWatch(watch.id)}
                 >
-                  <span className={`watch-list-radio watch-list-radio--${watch.accent_color || 'green'}`} aria-hidden="true"><Radio /></span>
+                  <span className={`watch-list-radio watch-list-radio--${watch.accent_color || 'green'}`} aria-hidden="true" />
                   <span className="watch-list-title">{watch.name}</span>
                   {watch.description ? <span className="watch-list-description">{watch.description}</span> : <span className="watch-list-description">Aucune description</span>}
-                  <ArrowRight aria-hidden="true" />
                 </button>
               </li>
             ))}
           </ul>
         ) : (
           <div className="watch-empty-state">
-            <Radio aria-hidden="true" />
             <p>Aucune veille pour le moment.</p>
             <span>Créez votre premier espace pour commencer.</span>
           </div>

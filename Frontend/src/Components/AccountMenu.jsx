@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Moon, Sun, Trash2, X } from 'lucide-react'
+import { Moon, Sun, X } from 'lucide-react'
 import { useTheme } from '../Context/useTheme'
-import { useWatch } from '../Context/WatchContext'
+import { useWatch } from '../Context/useWatch'
 import ConfirmModal from './ConfirmModal'
 import avatarPlaceholder from '../assets/Avatar-placeholder.jpeg'
 
@@ -78,7 +78,6 @@ export default function AccountMenu({ variant = 'floating', sansTexte = false}) 
               className="theme-toggle__delete"
               onClick={() => setIsResetConfirmOpen(true)}
             >
-              <Trash2 aria-hidden="true" />
               Réinitialiser la base de données
             </button>
           </div>

@@ -1,0 +1,347 @@
+// Ticket d'article
+.ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  padding-left: calc(#{$spacing-3} + 4px);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-5;
+  background-color: var(--bg-secondary);
+  transition: box-shadow $duration-fast ease, transform $duration-fast ease;
+
+  // Bandeau de statut à gauche
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background-color: var(--viz-new);
+  }
+
+  &--validated::before { background-color: var(--viz-validated); }
+  &--trash::before { background-color: var(--viz-trash); }
+
+  &:hover {
+    box-shadow: $shadow-3;
+    transform: translateY(-1px);
+  }
+
+  &[aria-busy='true'] {
+    opacity: 0.7;
+  }
+}
+
+.ticket-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.ticket-source {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  font-weight: $weight-6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  svg {
+    flex: 0 0 auto;
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}
+
+// Le texte reste en couleur de texte, la pastille porte la couleur du statut
+.ticket-status {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: $spacing-1;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  font-weight: $weight-6;
+
+  &::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: $radius-full;
+    background-color: var(--viz-new);
+  }
+
+  &--validated::before { background-color: var(--viz-validated); }
+  &--trash::before { background-color: var(--viz-trash); }
+}
+
+.ticket-title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: $font-3;
+  font-weight: $weight-7;
+  line-height: $line-height-1 + 0.1;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+
+  &:hover {
+    color: var(--accent-color, $accent-color);
+  }
+}
+
+.home-content p.ticket-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 $spacing-2;
+  font-size: $font-1;
+
+  span + span::before {
+    content: '·';
+    margin-right: $spacing-2;
+  }
+}
+
+.ticket-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.ticket-tag {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px $spacing-2;
+  border-radius: $radius-full;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--accent-color, $accent-color) 16%, var(--bg-secondary));
+  font-size: $font-1;
+  font-weight: $weight-6;
+
+  button {
+    display: flex;
+    padding: 0 4px;
+    border: 0;
+    font: inherit;
+    font-size: $font-2;
+    line-height: 1;
+    border-radius: $radius-full;
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-tertiary);
+    }
+  }
+
+  svg {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+}
+
+.ticket-tag-add,
+.ticket-note-add {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px $spacing-2;
+  border: 1px dashed var(--border-color);
+  border-radius: $radius-full;
+  color: var(--text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: $font-1;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover {
+    border-color: var(--accent-color, $accent-color);
+    color: var(--text-primary);
+  }
+}
+
+.ticket-note-add {
+  width: fit-content;
+  border-radius: $radius-4;
+}
+
+.ticket-tag-form input {
+  width: 8rem;
+  padding: 2px $spacing-2;
+  border: 1px solid var(--accent-color, $accent-color);
+  border-radius: $radius-full;
+  outline: 0;
+  font: inherit;
+  font-size: $font-1;
+}
+
+.ticket-note {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-2;
+  border: 0;
+  border-left: 3px solid var(--border-color);
+  border-radius: $radius-3;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  font: inherit;
+  font-size: $font-2;
+  text-align: left;
+  white-space: pre-wrap;
+  cursor: pointer;
+
+  span:first-child {
+    flex: 1;
+  }
+
+  .ticket-note-edit {
+    flex: 0 0 auto;
+    color: var(--text-secondary);
+    font-size: $font-1;
+    opacity: 0;
+  }
+
+  &:hover .ticket-note-edit,
+  &:focus-visible .ticket-note-edit {
+    opacity: 1;
+  }
+}
+
+.ticket-note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+
+  textarea {
+    width: 100%;
+    padding: $spacing-2;
+    border: 1px solid var(--accent-color, $accent-color);
+    border-radius: $radius-4;
+    outline: 0;
+    font: inherit;
+    font-size: $font-2;
+    resize: vertical;
+  }
+}
+
+.ticket-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+
+  button {
+    padding: 2px $spacing-2;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-full;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    font: inherit;
+    font-size: $font-1;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent-color, $accent-color);
+      color: var(--text-primary);
+    }
+  }
+}
+
+.ticket-note-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.ticket-hint {
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
+
+.home-content p.ticket-error {
+  color: $red-600;
+  font-size: $font-1;
+}
+
+.ticket-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-top: auto;
+  padding-top: $spacing-2;
+  border-top: 1px solid var(--border-color);
+}
+
+.ticket-button {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  min-height: 2rem;
+  padding: 0 $spacing-3;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-4;
+  color: var(--text-primary);
+  background-color: transparent;
+  font: inherit;
+  font-size: $font-2;
+  font-weight: $weight-6;
+  cursor: pointer;
+
+  svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--bg-tertiary);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    border-color: transparent;
+    color: white;
+    background-color: var(--accent-color, $accent-color);
+
+    &:hover:not(:disabled) {
+      background-color: var(--accent-dark, $accent-dark);
+    }
+  }
+
+  &--small {
+    min-height: 1.75rem;
+    padding: 0 $spacing-2;
+    font-size: $font-1;
+  }
+
+  &--danger {
+    color: $red-600;
+
+    &:hover:not(:disabled) {
+      background-color: color-mix(in srgb, #{$red-500} 12%, transparent);
+    }
+  }
+}

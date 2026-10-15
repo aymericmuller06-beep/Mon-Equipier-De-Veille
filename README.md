@@ -1,30 +1,35 @@
-# Equipier de Veille
-Application de veille composée d'une interface web, d'une API Flask et d'une base SQLite.
+# Mon équipier de veille
 
-## Installation et démarrage
+Application de veille : créez des espaces de veille, branchez-y des Google Alerts, puis triez les articles collectés. Chaque article est un ticket que l'on valide ou refuse, avec des tags et une note pour garder la raison du choix. Le dashboard résume la veille en un coup d'œil.
 
-Prérequis : Docker et Docker Compose.
+- **Frontend** : React + Vite ([Frontend/](Frontend/README.md))
+- **Backend** : API Flask + SQLite ([Backend/](Backend/README.md))
 
-Depuis la racine du projet, démarrez l'application complète :
+## Démarrer avec Docker
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-Lancez en arrière-plan avec `docker compose up --build -d`.
-
-- Interface web : <http://localhost:3000>
+- Interface : <http://localhost:3000>
 - API : <http://localhost:8000>
 
-Pour arrêter les services lancés en arrière-plan :
+Arrêter : `docker compose down`. Les données sont conservées dans `data/veille.db`.
+
+Le frontend Docker est une version compilée : après une modification du code, reconstruisez-le avec `docker compose up --build -d frontend`. Pour un rechargement automatique pendant le développement, gardez le backend dans Docker et lancez le frontend avec `npm run dev` (voir ci-dessous).
+
+## Démarrer en local (développement)
+
+Backend (Python 3.12+) :
 
 ```bash
-docker compose down
+cd Backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+FLASK_DEBUG=1 python main.py
 ```
 
-## Lancer le frontend en local
-
-Prérequis : Node.js et npm. Depuis la racine du projet :
+Frontend (Node 20+), dans un autre terminal :
 
 ```bash
 cd Frontend
@@ -32,8 +37,15 @@ npm ci
 npm run dev
 ```
 
-Vite affiche l'adresse locale dans le terminal (par défaut <http://localhost:5173>). Le backend doit être démarré séparément.
+L'interface est sur <http://localhost:5173>.
 
-La base SQLite est stockée dans `data/veille.db`.
+## Configuration du backend
 
-Documentation complémentaire : [API](Backend/README.md) et [frontend](Frontend/README.md).
+| Variable | Par défaut | Rôle |
+|---|---|---|
+| `SYNC_INTERVAL_MINUTES` | `60` | Fréquence de synchronisation automatique des sources (`0` pour désactiver) |
+| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Adresses autorisées à appeler l'API depuis un navigateur |
+| `DATABASE_PATH` | `data/veille.db` | Emplacement de la base SQLite |
+| `FLASK_DEBUG` | désactivé | `1` pour le mode debug (uniquement en local) |
+
+Côté frontend, l'adresse de l'API se règle avec `VITE_API_URL` (voir `Frontend/.env.example`).

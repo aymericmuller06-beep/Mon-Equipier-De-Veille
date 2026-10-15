@@ -1,31 +1,21 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
+import GoogleLogo from './GoogleLogo'
 
-export default function GoogleAlertModal({ isOpen, onClose, onCreate }) {
+function GoogleAlertModalContent({ onClose, onCreate }) {
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
-  // Réinitialise le formulaire à chaque ouverture
   useEffect(() => {
-    if (!isOpen) return
-    setName('')
-    setUrl('')
-    setFormError('')
-    setSubmitting(false)
-  }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  }, [onClose])
 
-  if (!isOpen) return null
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -51,7 +41,7 @@ export default function GoogleAlertModal({ isOpen, onClose, onCreate }) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="watch-modal-header">
-          <h2 id="google-alert-modal-title">Ajouter une Google Alert</h2>
+          <h2 id="google-alert-modal-title" className="google-alert-modal-title"><GoogleLogo size={22} /> Ajouter une Google Alert</h2>
           <button type="button" className="watch-modal-close" onClick={onClose} aria-label="Fermer la fenêtre">
             <X aria-hidden="true" />
           </button>
@@ -112,4 +102,10 @@ export default function GoogleAlertModal({ isOpen, onClose, onCreate }) {
       </div>
     </div>
   )
+}
+
+// Le contenu n'est monté qu'à l'ouverture : son état repart de zéro à chaque fois
+export default function GoogleAlertModal(props) {
+  if (!props.isOpen) return null
+  return <GoogleAlertModalContent {...props} />
 }

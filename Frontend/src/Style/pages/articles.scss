@@ -1,33 +1,190 @@
-// Liste d'articles partagée entre Nouveaux articles / Articles validés / Corbeille
-.article-list {
-  display: grid;
-  gap: $spacing-2;
+// Tableau d'articles (Nouveaux / Validés / Corbeille / Google Alerts)
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
 }
 
-.article-list-item {
+.board-tabs {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  padding: $spacing-1;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-5;
+  background-color: var(--bg-secondary);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    border: 0;
+    border-radius: $radius-4;
+    color: var(--text-secondary);
+    background: transparent;
+    font: inherit;
+    font-size: $font-2;
+    font-weight: $weight-6;
+    cursor: pointer;
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &.is-active {
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+      box-shadow: $shadow-2;
+    }
+  }
+}
+
+.board-tab-count {
+  min-width: 1.5rem;
+  padding: 0 $spacing-1;
+  border-radius: $radius-full;
+  background-color: var(--bg-tertiary);
+  font-size: $font-1;
+  text-align: center;
+}
+
+.board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3;
+  gap: $spacing-2;
+
+  select {
+    min-height: 2.25rem;
+    padding: 0 $spacing-2;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-4;
+    font: inherit;
+    font-size: $font-2;
+  }
+}
+
+.board-search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 16rem;
+  min-height: 2.25rem;
+  padding: 0 $spacing-2;
   border: 1px solid var(--border-color);
   border-radius: $radius-4;
   background-color: var(--bg-secondary);
+
+  &:focus-within {
+    border-color: var(--accent-color, $accent-color);
+  }
+
+  svg {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    color: var(--text-secondary);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: $font-2;
+  }
 }
 
-.article-list-item-content {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-  min-width: 0;
+.board-count {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
 
-  a {
+.ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+  gap: $spacing-3;
+  align-items: start;
+}
+
+.board-toast {
+  position: fixed;
+  bottom: $spacing-4;
+  left: 50%;
+  z-index: $z-tooltip;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  max-width: min(36rem, calc(100vw - 2rem));
+  padding: $spacing-2 $spacing-2 $spacing-2 $spacing-3;
+  border-radius: $radius-5;
+  color: $gray-50;
+  background-color: $gray-800;
+  box-shadow: $shadow-4;
+  font-size: $font-2;
+  transform: translateX(-50%);
+  animation: toast-in $duration-fast ease-out;
+
+  span {
     overflow: hidden;
-    color: var(--text-primary);
-    font-size: $font-2;
-    font-weight: $weight-6;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  button {
+    flex: 0 0 auto;
+    padding: $spacing-1 $spacing-3;
+    border: 0;
+    border-radius: $radius-4;
+    color: $gray-900;
+    background-color: $gray-50;
+    font: inherit;
+    font-weight: $weight-7;
+    cursor: pointer;
+  }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 0.5rem); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+// Barre des alertes de la page Google Alerts
+.alerts-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.alerts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+
+  li {
+    padding: $spacing-1 $spacing-3;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-full;
+    background-color: var(--bg-secondary);
+    font-size: $font-1;
+    font-weight: $weight-6;
+  }
+
+  a {
+    color: var(--text-primary);
 
     &:hover {
       color: var(--accent-color, $accent-color);
@@ -35,16 +192,8 @@
   }
 }
 
-.article-list-item-date {
-  color: var(--text-secondary);
-  font-size: $font-1;
-}
-
-.article-list-item-reason {
-  overflow: hidden;
-  color: var(--text-secondary);
-  font-size: $font-1;
-  font-style: italic;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.home-content h1.page-title-with-logo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
 }

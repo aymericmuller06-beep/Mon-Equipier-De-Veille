@@ -121,6 +121,11 @@ $gray-900: #111827;
 	--border-color: #{$gray-300};
 	--watch-gradient-opacity-1: 20%;
 	--watch-gradient-opacity-2: 9%;
+	// Couleurs des statuts dans les graphiques et tickets (palette validée pour le daltonisme)
+	--viz-new: #2a78d6;
+	--viz-validated: #1baf7a;
+	--viz-trash: #eb6834;
+	--viz-grid: #{$gray-200};
 }
 
 html.dark {
@@ -133,6 +138,10 @@ html.dark {
 	--border-color: #{$gray-700};
 	--watch-gradient-opacity-1: 12%;
 	--watch-gradient-opacity-2: 4%;
+	--viz-new: #3987e5;
+	--viz-validated: #199e70;
+	--viz-trash: #d95926;
+	--viz-grid: #3a3a3a;
 }
 
 // Accent Color (default: green; selected per watch in the interface)

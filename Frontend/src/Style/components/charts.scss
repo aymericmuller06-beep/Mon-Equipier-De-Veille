@@ -1,0 +1,225 @@
+// Graphiques du dashboard (SVG faits main)
+.viz-fill--new { background-color: var(--viz-new); }
+.viz-fill--validated { background-color: var(--viz-validated); }
+.viz-fill--trash { background-color: var(--viz-trash); }
+.viz-stroke--new { stroke: var(--viz-new); }
+.viz-stroke--validated { stroke: var(--viz-validated); }
+.viz-stroke--trash { stroke: var(--viz-trash); }
+
+.viz-grid {
+  stroke: var(--viz-grid);
+  stroke-width: 1;
+}
+
+.viz-axis {
+  fill: var(--text-secondary);
+  font-size: 10px;
+}
+
+.viz-empty {
+  color: var(--text-secondary);
+  font-size: $font-2;
+}
+
+.viz-legend {
+  display: grid;
+  gap: $spacing-1;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    font-size: $font-2;
+  }
+}
+
+.viz-legend--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-3;
+  padding-top: $spacing-2;
+
+  li {
+    font-size: $font-1;
+  }
+}
+
+.viz-swatch {
+  flex: 0 0 auto;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 3px;
+}
+
+.viz-legend-label {
+  color: var(--text-primary);
+}
+
+.viz-legend-value {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+// Anneau
+.donut {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: $spacing-3;
+  height: 100%;
+
+  .viz-legend {
+    flex: 1 1 9rem;
+  }
+}
+
+.donut-figure {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(7rem, 22vh, 10rem);
+  aspect-ratio: 1;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.donut-track {
+  fill: none;
+  stroke: var(--viz-grid);
+}
+
+.donut-segment {
+  fill: none;
+  cursor: pointer;
+  transition: opacity $duration-fast ease;
+
+  &.is-dimmed {
+    opacity: 0.35;
+  }
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.donut-center-value {
+  color: var(--text-primary);
+  font-size: $font-7;
+  font-weight: $weight-7;
+  line-height: 1;
+}
+
+.donut-center-label {
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
+
+// Colonnes par jour
+.columns-chart {
+  position: relative;
+  height: 100%;
+  min-height: 8rem;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+}
+
+.viz-column {
+  fill: var(--accent-color, $accent-color);
+  transition: opacity $duration-fast ease;
+
+  &.is-dimmed {
+    opacity: 0.4;
+  }
+}
+
+.viz-hit {
+  fill: transparent;
+  outline: none;
+  cursor: default;
+}
+
+.viz-tooltip {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-3;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  box-shadow: $shadow-3;
+  font-size: $font-1;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+
+  span {
+    color: var(--text-secondary);
+  }
+}
+
+// Barres empilées par alerte
+.source-bars {
+  display: grid;
+  gap: $spacing-3;
+
+  li {
+    display: grid;
+    gap: $spacing-1;
+  }
+}
+
+.source-bars-head {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-2;
+  font-size: $font-2;
+}
+
+.source-bars-name {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-weight: $weight-6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-bars-value {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
+
+.source-bars-track {
+  display: flex;
+  gap: 2px;
+  height: 0.65rem;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.source-bars-segment {
+  min-width: 4px;
+}
+
+.source-bars-empty {
+  flex: 1;
+  background-color: var(--viz-grid);
+}

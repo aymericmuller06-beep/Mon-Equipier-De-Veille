@@ -1,17 +1,36 @@
 import { apiFetch } from './client'
 
-export function getArticles({ themeId, status, sourceId } = {}) {
+export function getArticles({ themeId, status, sourceId, toolType, limit, sort } = {}) {
   const params = new URLSearchParams()
   if (sourceId) params.set('source_id', sourceId)
   if (themeId) params.set('theme_id', themeId)
   if (status) params.set('status', status)
+  if (toolType) params.set('tool_type', toolType)
+  if (limit) params.set('limit', limit)
+  if (sort) params.set('sort', sort)
   const query = params.toString() ? `?${params.toString()}` : ''
   return apiFetch(`/articles${query}`)
 }
 
-export function updateArticleStatus(id, status, reason = '') {
-  return apiFetch(`/articles/${id}/status`, {
+// changes : { status?, status_reason? } — renvoie l'article complet (tags inclus)
+export function updateArticle(id, changes) {
+  return apiFetch(`/articles/${id}`, {
     method: 'PATCH',
-    body: JSON.stringify({ status, reason }),
+    body: JSON.stringify(changes),
   })
+}
+
+export function emptyTrash(themeId) {
+  return apiFetch(`/articles/trash?theme_id=${themeId}`, { method: 'DELETE' })
+}
+
+export function addTagToArticle(articleId, tagId) {
+  return apiFetch(`/articles/${articleId}/tags`, {
+    method: 'POST',
+    body: JSON.stringify({ tag_id: tagId }),
+  })
+}
+
+export function removeTagFromArticle(articleId, tagId) {
+  return apiFetch(`/articles/${articleId}/tags/${tagId}`, { method: 'DELETE' })
 }

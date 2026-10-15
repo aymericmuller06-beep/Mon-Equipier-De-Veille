@@ -1,13 +1,20 @@
-FROM node:20-alpine
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY . .
 
-EXPOSE 5173
+# Vite intègre l'URL de l'API dans le code au moment du build
+ARG VITE_API_URL=http://localhost:8000
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+FROM nginx:alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80

@@ -1,9 +1,11 @@
+import json
 import sqlite3
 import logging
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
-from rss import fetch_rss_entries
+from sync import sync_source as run_source_sync
 
 logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
@@ -54,6 +56,35 @@ def validate_tool_type(tool_type):
     """Valide qu'un type d'outil fait partie des types connus"""
     return tool_type in TOOL_TYPES
 
+def now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+ARTICLE_SELECT = """
+    SELECT articles.*, sources.name AS source_name, sources.tool_type AS tool_type
+    FROM articles JOIN sources ON sources.id = articles.source_id
+"""
+
+def attach_tags(db, articles):
+    """Ajoute à chaque article la liste de ses tags (une seule requête pour toute la liste)"""
+    ids = [article["id"] for article in articles]
+    tags_by_article = {article_id: [] for article_id in ids}
+    if ids:
+        rows = db.execute("""
+            SELECT at.article_id, t.id, t.name FROM article_tags at
+            JOIN tags t ON t.id = at.tag_id
+            WHERE at.article_id IN (SELECT value FROM json_each(?))
+            ORDER BY t.name
+        """, (json.dumps(ids),)).fetchall()
+        for row in rows:
+            tags_by_article[row["article_id"]].append({"id": row["id"], "name": row["name"]})
+    for article in articles:
+        article["tags"] = tags_by_article[article["id"]]
+    return articles
+
+def get_full_article(db, article_id):
+    row = db.execute(ARTICLE_SELECT + " WHERE articles.id = ?", (article_id,)).fetchone()
+    return attach_tags(db, [dict(row)])[0] if row else None
+
 
 @api.route("/")
 def read_root():
@@ -102,9 +133,9 @@ def add_theme():
 @api.route("/themes/<int:theme_id>", methods=["PUT"])
 def update_theme(theme_id):
     data = request.get_json()
-    if not data or not any(k in data for k in ("name", "accent_color")):
-        logger.warning(f"Tentative de modifier le thème {theme_id} sans 'name' ni 'accent_color'")
-        return jsonify({"error": "Le champ 'name' ou 'accent_color' est requis"}), 400
+    if not data or not any(k in data for k in ("name", "accent_color", "description")):
+        logger.warning(f"Tentative de modifier le thème {theme_id} sans champ modifiable")
+        return jsonify({"error": "Le champ 'name', 'accent_color' ou 'description' est requis"}), 400
 
     db = get_db()
     theme = db.execute("SELECT * FROM themes WHERE id = ?", (theme_id,)).fetchone()
@@ -118,6 +149,9 @@ def update_theme(theme_id):
     if "accent_color" in data and not validate_accent_color(data["accent_color"]):
         logger.warning(f"Couleur d'accent invalide rejetée lors de modification: '{data['accent_color']}'")
         return jsonify({"error": "Couleur d'accent invalide"}), 400
+    if "description" in data and not validate_length(data["description"] or "", min_len=0, max_len=500):
+        logger.warning(f"Description de thème invalide (longueur) lors de modification")
+        return jsonify({"error": "La description doit faire au maximum 500 caractères"}), 400
 
     name = data.get("name", theme["name"])
     accent_color = data.get("accent_color", theme["accent_color"])
@@ -258,40 +292,11 @@ def sync_source(source_id):
         return jsonify({"error": "Source non trouvée"}), 404
 
     try:
-        entries = fetch_rss_entries(source["url"])
+        result = run_source_sync(source)
     except Exception as e:
         logger.warning(f"✗ Erreur de lecture du flux RSS pour la source {source_id}: {str(e)}")
         return jsonify({"error": "Impossible de lire ce flux RSS. Vérifiez l'URL."}), 502
-
-    # Les articles déjà importés depuis cette source ne sont pas réinsérés
-    existing_urls = {row["url"] for row in db.execute(
-        "SELECT url FROM articles WHERE source_id = ?", (source_id,)
-    ).fetchall()}
-
-    inserted = []
-    for entry in entries:
-        if entry["url"] in existing_urls:
-            continue
-        cursor = db.execute(
-            "INSERT INTO articles (title, url, published_at, source_id) VALUES (?, ?, ?, ?)",
-            (entry["title"], entry["url"], entry["published_at"], source_id)
-        )
-        inserted.append({
-            "id": cursor.lastrowid,
-            "title": entry["title"],
-            "url": entry["url"],
-            "published_at": entry["published_at"],
-        })
-        existing_urls.add(entry["url"])
-
-    db.commit()
-    logger.info(f"✓ Synchronisation source {source_id}: {len(inserted)} nouvel(s) article(s) sur {len(entries)} trouvés dans le flux")
-    return jsonify({
-        "source_id": source_id,
-        "fetched": len(entries),
-        "inserted": len(inserted),
-        "articles": inserted,
-    }), 200
+    return jsonify(result), 200
 
 @api.route("/sources/<int:source_id>", methods=["DELETE"])
 def delete_source(source_id):
@@ -309,29 +314,72 @@ def delete_source(source_id):
 @api.route("/articles", methods=["GET"])
 def get_articles():
     db = get_db()
-    theme_id = request.args.get("theme_id")
-    status = request.args.get("status")
-    source_id = request.args.get("source_id")
+    filters = {
+        "articles.source_id": request.args.get("source_id"),
+        "sources.theme_id": request.args.get("theme_id"),
+        "sources.tool_type": request.args.get("tool_type"),
+        "articles.status": request.args.get("status"),
+    }
+    conditions = [f"{column} = ?" for column, value in filters.items() if value]
+    params = [value for value in filters.values() if value]
 
-    query = "SELECT articles.* FROM articles"
-    conditions = []
-    params = []
-    if source_id:
-        conditions.append("articles.source_id = ?")
-        params.append(source_id)
-    if theme_id:
-        query += " JOIN sources ON sources.id = articles.source_id"
-        conditions.append("sources.theme_id = ?")
-        params.append(theme_id)
-    if status:
-        conditions.append("articles.status = ?")
-        params.append(status)
+    query = ARTICLE_SELECT
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
-    query += " ORDER BY articles.id DESC"
+    # sort=decision : derniers articles triés (validés / refusés) en premier
+    if request.args.get("sort") == "decision":
+        query += " ORDER BY articles.status_changed_at DESC, articles.id DESC"
+    else:
+        query += " ORDER BY COALESCE(articles.published_at, articles.created_at) DESC, articles.id DESC"
+    limit = request.args.get("limit", type=int)
+    if limit:
+        query += " LIMIT ?"
+        params.append(limit)
 
-    cursor = db.execute(query, params)
-    return jsonify([dict(row) for row in cursor.fetchall()])
+    articles = [dict(row) for row in db.execute(query, params).fetchall()]
+    return jsonify(attach_tags(db, articles))
+
+@api.route("/articles/<int:article_id>", methods=["PATCH"])
+def patch_article(article_id):
+    """Modifie le statut et/ou la note d'un article ; renvoie l'article complet"""
+    data = request.get_json()
+    if not data or not any(k in data for k in ("status", "status_reason")):
+        return jsonify({"error": "Le champ 'status' ou 'status_reason' est requis"}), 400
+    if "status" in data and not validate_status(data["status"]):
+        logger.warning(f"Statut invalide rejeté pour l'article {article_id}: '{data['status']}'")
+        return jsonify({"error": "Statut invalide"}), 400
+    if "status_reason" in data and not validate_length(data["status_reason"] or "", min_len=0, max_len=2000):
+        return jsonify({"error": "La note doit faire au maximum 2000 caractères"}), 400
+
+    db = get_db()
+    article = db.execute("SELECT status, status_reason, status_changed_at FROM articles WHERE id = ?", (article_id,)).fetchone()
+    if article is None:
+        return jsonify({"error": "Article non trouvé"}), 404
+
+    status = data.get("status", article["status"])
+    reason = data.get("status_reason", article["status_reason"]) or ""
+    changed_at = now_iso() if status != article["status"] else article["status_changed_at"]
+    db.execute(
+        "UPDATE articles SET status = ?, status_reason = ?, status_changed_at = ? WHERE id = ?",
+        (status, reason, changed_at, article_id)
+    )
+    db.commit()
+    logger.info(f"✓ Article {article_id} mis à jour (statut: '{status}')")
+    return jsonify(get_full_article(db, article_id)), 200
+
+@api.route("/articles/trash", methods=["DELETE"])
+def empty_trash():
+    """Supprime définitivement les articles en corbeille d'une veille"""
+    theme_id = request.args.get("theme_id", type=int)
+    if not theme_id:
+        return jsonify({"error": "Le paramètre 'theme_id' est requis"}), 400
+    db = get_db()
+    in_trash = "status = 'trash' AND source_id IN (SELECT id FROM sources WHERE theme_id = ?)"
+    db.execute(f"INSERT OR IGNORE INTO dismissed_articles (source_id, url) SELECT source_id, url FROM articles WHERE {in_trash}", (theme_id,))
+    cursor = db.execute(f"DELETE FROM articles WHERE {in_trash}", (theme_id,))
+    db.commit()
+    logger.info(f"✓ Corbeille de la veille {theme_id} vidée ({cursor.rowcount} article(s))")
+    return jsonify({"deleted": cursor.rowcount}), 200
 
 @api.route("/articles/<int:article_id>/status", methods=["PATCH"])
 def update_article_status(article_id):
@@ -348,8 +396,8 @@ def update_article_status(article_id):
         return jsonify({"error": "La raison doit faire au maximum 500 caractères"}), 400
     db = get_db()
     cursor = db.execute(
-        "UPDATE articles SET status = ?, status_reason = ? WHERE id = ?",
-        (data["status"], reason, article_id)
+        "UPDATE articles SET status = ?, status_reason = ?, status_changed_at = ? WHERE id = ?",
+        (data["status"], reason, now_iso(), article_id)
     )
     db.commit()
     if cursor.rowcount == 0:
@@ -376,8 +424,8 @@ def add_article():
     db = get_db()
     try:
         cursor = db.execute(
-            "INSERT INTO articles (title, url, published_at, source_id) VALUES (?, ?, ?, ?)",
-            (data["title"], data["url"], data.get("published_at"), data["source_id"])
+            "INSERT INTO articles (title, url, published_at, source_id, created_at) VALUES (?, ?, ?, ?, ?)",
+            (data["title"], data["url"], data.get("published_at"), data["source_id"], now_iso())
         )
         db.commit()
         logger.info(f"✓ Article créé: '{data['title']}' (ID: {cursor.lastrowid}, source_id: {data['source_id']})")
@@ -540,14 +588,84 @@ def delete_tag(tag_id):
     logger.info(f"✓ Tag {tag_id} supprimé")
     return jsonify({"message": f"Tag {tag_id} supprimé avec succès"}), 200
 
+# ==================== STATISTIQUES ====================
+@api.route("/stats", methods=["GET"])
+def get_stats():
+    """Chiffres du dashboard d'une veille"""
+    theme_id = request.args.get("theme_id", type=int)
+    if not theme_id:
+        return jsonify({"error": "Le paramètre 'theme_id' est requis"}), 400
+    days = min(request.args.get("days", default=14, type=int), 90)
+    db = get_db()
+    in_theme = "articles.source_id IN (SELECT id FROM sources WHERE theme_id = ?)"
+
+    by_status = {"new": 0, "validated": 0, "trash": 0}
+    for row in db.execute(f"SELECT status, COUNT(*) AS n FROM articles WHERE {in_theme} GROUP BY status", (theme_id,)):
+        by_status[row["status"]] = row["n"]
+
+    # Articles collectés par jour, jours sans article inclus
+    today = datetime.now(timezone.utc).date()
+    start = today - timedelta(days=days - 1)
+    counts = {row["day"]: row["n"] for row in db.execute(f"""
+        SELECT substr(created_at, 1, 10) AS day, COUNT(*) AS n FROM articles
+        WHERE {in_theme} AND substr(created_at, 1, 10) >= ? GROUP BY day
+    """, (theme_id, start.isoformat()))}
+    by_day = [
+        {"date": (start + timedelta(days=i)).isoformat(), "count": counts.get((start + timedelta(days=i)).isoformat(), 0)}
+        for i in range(days)
+    ]
+
+    by_source = [dict(row) for row in db.execute("""
+        SELECT sources.id, sources.name,
+            SUM(articles.status = 'new') AS new,
+            SUM(articles.status = 'validated') AS validated,
+            SUM(articles.status = 'trash') AS trash
+        FROM sources LEFT JOIN articles ON articles.source_id = sources.id
+        WHERE sources.theme_id = ?
+        GROUP BY sources.id ORDER BY COUNT(articles.id) DESC
+    """, (theme_id,))]
+    for source in by_source:
+        for key in ("new", "validated", "trash"):
+            source[key] = source[key] or 0
+
+    top_tags = [dict(row) for row in db.execute(f"""
+        SELECT tags.id, tags.name, COUNT(*) AS count FROM article_tags
+        JOIN tags ON tags.id = article_tags.tag_id
+        JOIN articles ON articles.id = article_tags.article_id
+        WHERE {in_theme} GROUP BY tags.id ORDER BY count DESC, tags.name LIMIT 8
+    """, (theme_id,))]
+
+    week_ago = (today - timedelta(days=6)).isoformat()
+    collected_7d = db.execute(
+        f"SELECT COUNT(*) FROM articles WHERE {in_theme} AND substr(created_at, 1, 10) >= ?", (theme_id, week_ago)
+    ).fetchone()[0]
+    processed_7d = db.execute(
+        f"SELECT COUNT(*) FROM articles WHERE {in_theme} AND status != 'new' AND substr(status_changed_at, 1, 10) >= ?", (theme_id, week_ago)
+    ).fetchone()[0]
+
+    return jsonify({
+        "by_status": by_status,
+        "by_day": by_day,
+        "by_source": by_source,
+        "top_tags": top_tags,
+        "collected_7d": collected_7d,
+        "processed_7d": processed_7d,
+    })
+
 # ==================== SYSTEME ====================
 @api.route("/system/reset", methods=["POST"])
 def reset_database():
     """Vide toutes les tables de la base locale (reset complet, irréversible)."""
+    # Le corps JSON obligatoire force une requête "preflight" CORS : un site tiers ne peut pas déclencher le reset
+    data = request.get_json(silent=True)
+    if not data or data.get("confirm") != "RESET":
+        logger.warning("Tentative de réinitialisation sans confirmation")
+        return jsonify({"error": "Confirmation requise"}), 400
     db = get_db()
     # Les tables filles (FK ON DELETE CASCADE) sont vidées automatiquement via "themes",
     # mais on nettoie explicitement chaque table pour ne rien laisser derrière.
     db.execute("DELETE FROM article_tags")
+    db.execute("DELETE FROM dismissed_articles")
     db.execute("DELETE FROM articles")
     db.execute("DELETE FROM sources")
     db.execute("DELETE FROM tags")

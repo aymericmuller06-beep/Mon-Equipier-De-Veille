@@ -3,6 +3,8 @@
   flex-direction: column;
   width: 250px;
   height: 100vh;
+  position: sticky;
+  top: 0;
   background-color: var(--bg-secondary);
   box-shadow: $shadow-3;
 }

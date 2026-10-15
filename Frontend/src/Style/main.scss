@@ -20,11 +20,14 @@
 @import './components/theme-toggle';
 @import './components/watch-modal';
 @import './components/account-menu';
+@import './components/ticket';
+@import './components/charts';
 
 // Pages
 @import './pages/watch-selection';
 @import './pages/home';
 @import './pages/articles';
+@import './pages/dashboard';
 
 // Utilities
 @import './utilities/utils';

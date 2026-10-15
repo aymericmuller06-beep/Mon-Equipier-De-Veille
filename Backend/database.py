@@ -1,9 +1,15 @@
 import os
+import logging
 import sqlite3
 from flask import g
 
-os.makedirs("/app/data", exist_ok=True)
-DATABASE = "/app/data/veille.db"
+logger = logging.getLogger(__name__)
+
+# Par défaut : data/veille.db à la racine du projet. Surchargeable via DATABASE_PATH (Docker).
+DATABASE = os.environ.get(
+    "DATABASE_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "veille.db"),
+)
 
 def get_db():
     db = getattr(g, "_database", None)
@@ -19,9 +25,10 @@ def close_connection(exception):
         db.close()
 
 def init_db(app):
+    os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     with app.app_context():
         db = get_db()
-        
+
         db.execute("""
             CREATE TABLE IF NOT EXISTS themes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,6 +71,8 @@ def init_db(app):
                 source_id INTEGER,
                 status TEXT NOT NULL DEFAULT 'new',
                 status_reason TEXT,
+                created_at TEXT,
+                status_changed_at TEXT,
                 FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
             )
         """)
@@ -78,6 +87,29 @@ def init_db(app):
             db.execute("ALTER TABLE articles ADD COLUMN status TEXT NOT NULL DEFAULT 'new'")
         if "status_reason" not in article_columns:
             db.execute("ALTER TABLE articles ADD COLUMN status_reason TEXT")
+        # Date de collecte (graphiques du dashboard) et date de la dernière décision
+        if "created_at" not in article_columns:
+            db.execute("ALTER TABLE articles ADD COLUMN created_at TEXT")
+            db.execute("UPDATE articles SET created_at = COALESCE(published_at, CURRENT_TIMESTAMP)")
+        if "status_changed_at" not in article_columns:
+            db.execute("ALTER TABLE articles ADD COLUMN status_changed_at TEXT")
+
+        # Un même article n'est importé qu'une fois par source
+        try:
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_source_url ON articles (source_id, url)")
+        except sqlite3.IntegrityError:
+            logger.warning("Doublons d'articles existants : index d'unicité (source_id, url) non créé")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_articles_status ON articles (status)")
+
+        # Articles supprimés définitivement : la synchronisation ne doit pas les réimporter
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS dismissed_articles (
+                source_id INTEGER NOT NULL,
+                url TEXT NOT NULL,
+                PRIMARY KEY (source_id, url),
+                FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+            )
+        """)
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS tags (

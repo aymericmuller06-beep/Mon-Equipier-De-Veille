@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 
-export default function ConfirmModal({
-  isOpen,
+function ConfirmModalContent({
   onClose,
   onConfirm,
   title = 'Confirmer l’action',
@@ -16,24 +15,14 @@ export default function ConfirmModal({
   const [error, setError] = useState('')
   const [typedPhrase, setTypedPhrase] = useState('')
 
-  // Réinitialise l'état à chaque ouverture
   useEffect(() => {
-    if (!isOpen) return
-    setSubmitting(false)
-    setError('')
-    setTypedPhrase('')
-  }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  }, [onClose])
 
-  if (!isOpen) return null
 
   const isPhraseRequired = Boolean(confirmPhrase)
   const isPhraseMatched = !isPhraseRequired || typedPhrase === confirmPhrase
@@ -102,4 +91,10 @@ export default function ConfirmModal({
       </div>
     </div>
   )
+}
+
+// Le contenu n'est monté qu'à l'ouverture : son état repart de zéro à chaque fois
+export default function ConfirmModal(props) {
+  if (!props.isOpen) return null
+  return <ConfirmModalContent {...props} />
 }

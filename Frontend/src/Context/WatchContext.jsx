@@ -1,14 +1,14 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getThemes, createTheme, updateThemeAccent, deleteTheme } from '../api/themes'
 import { resetDatabase } from '../api/system'
+import { WatchContext } from './useWatch'
 
-const WatchContext = createContext(null)
-const WATCH_TITLE_STORAGE_KEY = 'watchTitle'
+const WATCH_ID_STORAGE_KEY = 'watchId'
 
 export function WatchProvider({ children }) {
   const [watches, setWatches] = useState([])
   // Persistée pour survivre à un rechargement de page (sinon /veille/* retombe sans veille sélectionnée)
-  const [watchTitle, setWatchTitle] = useState(() => localStorage.getItem(WATCH_TITLE_STORAGE_KEY) || '')
+  const [watchId, setWatchId] = useState(() => Number(localStorage.getItem(WATCH_ID_STORAGE_KEY)) || null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -25,19 +25,19 @@ export function WatchProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    if (watchTitle) {
-      localStorage.setItem(WATCH_TITLE_STORAGE_KEY, watchTitle)
+    if (watchId) {
+      localStorage.setItem(WATCH_ID_STORAGE_KEY, String(watchId))
     } else {
-      localStorage.removeItem(WATCH_TITLE_STORAGE_KEY)
+      localStorage.removeItem(WATCH_ID_STORAGE_KEY)
     }
-  }, [watchTitle])
+  }, [watchId])
 
-  const selectWatch = async (title) => {
-    const cleanTitle = title.trim()
-    if (!cleanTitle) return
+  // Thème backend correspondant à la veille actuellement ouverte
+  const currentWatch = watches.find((item) => item.id === watchId) || null
+  const watchTitle = currentWatch?.name || ''
 
-    const existing = watches.find((watch) => watch.name === cleanTitle)
-    if (existing) setWatchTitle(existing.name)
+  const selectWatch = (id) => {
+    if (watches.some((watch) => watch.id === id)) setWatchId(id)
   }
 
   const createWatch = async (title, description = '', accentColor = 'green') => {
@@ -46,52 +46,32 @@ export function WatchProvider({ children }) {
 
     const created = await createTheme(cleanTitle, description.trim(), accentColor)
     setWatches((currentWatches) => [...currentWatches, created])
-    setWatchTitle(created.name)
+    setWatchId(created.id)
     return created
   }
 
-  const getWatchAccent = (title) => {
-    const watch = watches.find((item) => item.name === title)
-    return watch?.accent_color || 'green'
-  }
-
-  // Thème backend correspondant à la veille actuellement ouverte
-  const currentWatch = watches.find((item) => item.name === watchTitle) || null
-
-  const setWatchAccent = async (title, color) => {
-    const watch = watches.find((item) => item.name === title)
-    if (!watch) return
-
-    await updateThemeAccent(watch.id, color)
+  const setWatchAccent = async (id, color) => {
+    await updateThemeAccent(id, color)
     setWatches((currentWatches) => (
-      currentWatches.map((item) => (item.id === watch.id ? { ...item, accent_color: color } : item))
+      currentWatches.map((item) => (item.id === id ? { ...item, accent_color: color } : item))
     ))
   }
 
-  const deleteWatch = async (title) => {
-    const watch = watches.find((item) => item.name === title)
-    if (!watch) return
-
-    await deleteTheme(watch.id)
-    setWatches((currentWatches) => currentWatches.filter((item) => item.id !== watch.id))
-    setWatchTitle((currentTitle) => (currentTitle === title ? '' : currentTitle))
+  const deleteWatch = async (id) => {
+    await deleteTheme(id)
+    setWatches((currentWatches) => currentWatches.filter((item) => item.id !== id))
+    setWatchId((currentId) => (currentId === id ? null : currentId))
   }
 
   const resetAllData = async () => {
     await resetDatabase()
     setWatches([])
-    setWatchTitle('')
+    setWatchId(null)
   }
 
   return (
-    <WatchContext.Provider value={{ watchTitle, watches, currentWatch, loading, error, selectWatch, createWatch, getWatchAccent, setWatchAccent, deleteWatch, resetAllData }}>
+    <WatchContext.Provider value={{ watchTitle, watches, currentWatch, loading, error, selectWatch, createWatch, setWatchAccent, deleteWatch, resetAllData }}>
       {children}
     </WatchContext.Provider>
   )
-}
-
-export function useWatch() {
-  const context = useContext(WatchContext)
-  if (!context) throw new Error('useWatch doit être utilisé dans WatchProvider')
-  return context
 }

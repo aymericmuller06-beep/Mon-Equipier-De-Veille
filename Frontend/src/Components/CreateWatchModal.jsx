@@ -3,33 +3,21 @@ import { X } from 'lucide-react'
 
 const ACCENT_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet']
 
-export default function CreateWatchModal({ isOpen, onClose, onCreate }) {
+function CreateWatchModalContent({ onClose, onCreate }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('') 
   const [accentColor, setAccentColor] = useState('green')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
-  // Réinitialise le formulaire à chaque ouverture
   useEffect(() => {
-    if (!isOpen) return
-    setTitle('')
-    setDescription('')
-    setAccentColor('green')
-    setFormError('')
-    setSubmitting(false)
-  }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  }, [onClose])
 
-  if (!isOpen) return null
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -110,4 +98,10 @@ export default function CreateWatchModal({ isOpen, onClose, onCreate }) {
       </div>
     </div>
   )
+}
+
+// Le contenu n'est monté qu'à l'ouverture : son état repart de zéro à chaque fois
+export default function CreateWatchModal(props) {
+  if (!props.isOpen) return null
+  return <CreateWatchModalContent {...props} />
 }
