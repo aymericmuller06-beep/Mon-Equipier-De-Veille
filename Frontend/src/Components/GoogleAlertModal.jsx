@@ -1,6 +1,27 @@
-import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { useState } from 'react'
+import { ExternalLink } from 'lucide-react'
 import GoogleLogo from './GoogleLogo'
+import ToolModal, { ToolSteps } from './ToolModal'
+
+const FEED_PREFIX = 'https://www.google.com/alerts/feeds/'
+
+const STEPS = [
+  {
+    action: <>Ouvrez <a href="https://www.google.com/alerts" target="_blank" rel="noreferrer">Google Alerts <ExternalLink aria-hidden="true" /></a> et tapez votre sujet.</>,
+    detail: 'Restez simple : un ou deux mots-clés suffisent. Utilisez des guillemets pour une expression exacte.',
+  },
+  {
+    action: <>Cliquez sur « Afficher les options », puis choisissez <strong>Envoyer à : Flux RSS</strong>.</>,
+    detail: 'C’est le seul réglage obligatoire. Conseillé : Fréquence « Au fur et à mesure » et Nombre « Tous les résultats ».',
+  },
+  {
+    action: <>Cliquez sur « Créer l’alerte », puis sur l’<strong>icône RSS</strong> (orange) à droite de votre alerte.</>,
+  },
+  {
+    action: <>Copiez l’adresse de la page qui s’ouvre et collez-la ci-dessous.</>,
+    detail: <>Elle commence par <code>{FEED_PREFIX}</code></>,
+  },
+]
 
 function GoogleAlertModalContent({ onClose, onCreate }) {
   const [name, setName] = useState('')
@@ -8,23 +29,17 @@ function GoogleAlertModalContent({ onClose, onCreate }) {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
+  const trimmedUrl = url.trim()
+  const looksWrong = trimmedUrl !== '' && !trimmedUrl.startsWith(FEED_PREFIX)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!name.trim() || !url.trim() || submitting) return
+    if (!name.trim() || !trimmedUrl || submitting) return
 
     setSubmitting(true)
     setFormError('')
     try {
-      await onCreate(name.trim(), url.trim())
+      await onCreate(name.trim(), trimmedUrl)
     } catch (err) {
       setFormError(err.message)
       setSubmitting(false)
@@ -32,75 +47,49 @@ function GoogleAlertModalContent({ onClose, onCreate }) {
   }
 
   return (
-    <div className="watch-modal-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="watch-modal google-alert-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="google-alert-modal-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="watch-modal-header">
-          <h2 id="google-alert-modal-title" className="google-alert-modal-title"><GoogleLogo size={22} /> Ajouter une Google Alert</h2>
-          <button type="button" className="watch-modal-close" onClick={onClose} aria-label="Fermer la fenêtre">
-            <X aria-hidden="true" />
+    <ToolModal title="Ajouter une Google Alert" icon={<GoogleLogo size={22} />} onClose={onClose} wide>
+      <ToolSteps steps={STEPS} />
+
+      <form className="watch-modal-form" onSubmit={handleSubmit}>
+        <label htmlFor="google-alert-url">Adresse du flux RSS</label>
+        <input
+          autoFocus
+          id="google-alert-url"
+          type="url"
+          placeholder={`${FEED_PREFIX}…`}
+          value={url}
+          onChange={(event) => setUrl(event.target.value)}
+          required
+        />
+        {looksWrong && (
+          <p className="tool-modal-warning">
+            Ce n’est pas une adresse de flux Google Alerts : vérifiez que vous avez copié la page ouverte par l’icône RSS.
+          </p>
+        )}
+
+        <label htmlFor="google-alert-name">Nom de l’alerte</label>
+        <input
+          id="google-alert-name"
+          type="text"
+          placeholder="Ex. : Concurrents"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          maxLength={150}
+          required
+        />
+
+        <p className="tool-modal-note">Un flux vide juste après la création est normal : il se remplit au fil des nouveaux résultats.</p>
+
+        {formError && <p className="watch-selection-error">{formError}</p>}
+
+        <div className="watch-modal-actions">
+          <button type="button" className="watch-modal-cancel" onClick={onClose}>Annuler</button>
+          <button className="watch-selection-submit" type="submit" disabled={submitting}>
+            {submitting ? 'Ajout en cours…' : 'Ajouter et synchroniser'}
           </button>
         </div>
-
-        <ol className="google-alert-tuto">
-          <li>Rendez-vous sur <a href="https://www.google.com/alerts" target="_blank" rel="noreferrer">google.com/alerts</a> et connectez-vous.</li>
-          <li>Saisissez le sujet ou mot-clé à surveiller dans le champ de recherche (privilégiez une requête simple : trop de termes = peu de résultats).</li>
-          <li>Cliquez sur « Afficher les options » et réglez :
-            <ul>
-              <li><strong>Fréquence</strong> : « Au fur et à mesure »</li>
-              <li><strong>Sources</strong> : « Automatique » (ou celles de votre choix)</li>
-              <li><strong>Langue</strong> et <strong>Région</strong> : selon vos besoins</li>
-              <li><strong>Nombre</strong> : « Tous les résultats »</li>
-              <li><strong>Envoyer à</strong> : <strong>Flux RSS</strong> (au lieu de votre adresse e-mail)</li>
-            </ul>
-          </li>
-          <li>Cliquez sur « Créer l'alerte ».</li>
-          <li>Dans la liste « Mes alertes », cliquez sur l'icône RSS à côté de l'alerte : une page s'ouvre.</li>
-          <li>Copiez l'URL de cette page. Elle doit ressembler à <code>https://www.google.com/alerts/feeds/…/…</code>.</li>
-          <li>Collez cette URL ci-dessous, puis cliquez sur « Ajouter et synchroniser ».</li>
-        </ol>
-        <p className="google-alert-tuto-note">
-          Le flux se remplit au fur et à mesure : un flux vide juste après la création est normal. Relancez la synchronisation plus tard depuis la page Google Alerts.
-        </p>
-
-        <form className="watch-modal-form" onSubmit={handleSubmit}>
-          <label htmlFor="google-alert-name">Nom de l'alerte</label>
-          <input
-            autoFocus
-            id="google-alert-name"
-            type="text"
-            placeholder="Ex. : Veille concurrentielle"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-          />
-
-          <label htmlFor="google-alert-url">URL du flux RSS de l'alerte</label>
-          <input
-            id="google-alert-url"
-            type="url"
-            placeholder="https://www.google.com/alerts/feeds/..."
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            required
-          />
-
-          {formError && <p className="watch-selection-error">{formError}</p>}
-
-          <div className="watch-modal-actions">
-            <button type="button" className="watch-modal-cancel" onClick={onClose}>Annuler</button>
-            <button className="watch-selection-submit" type="submit" disabled={submitting}>
-              {submitting ? 'Ajout en cours…' : 'Ajouter et synchroniser'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ToolModal>
   )
 }
 

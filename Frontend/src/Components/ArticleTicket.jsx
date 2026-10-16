@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import GoogleLogo from './GoogleLogo'
+import ToolIcon from './ToolIcon'
 import { STATUS_LABELS, formatDate, formatRelative } from '../utils/format'
 
 // Raccourcis de note : un clic ajoute le texte à la note en cours
@@ -78,7 +78,7 @@ export default function ArticleTicket({ article, allTags, onUpdate, onAddTag, on
     <article className={`ticket ticket--${article.status}`} aria-busy={busy}>
       <header className="ticket-meta">
         <span className="ticket-source" title={article.source_name}>
-          {article.tool_type === 'google_alerts' && <GoogleLogo size={13} />}
+          <ToolIcon type={article.tool_type} size={13} />
           {article.source_name}
         </span>
         <span className={`ticket-status ticket-status--${article.status}`}>{STATUS_LABELS[article.status]}</span>

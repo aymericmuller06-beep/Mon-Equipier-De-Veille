@@ -1,8 +1,9 @@
 import { STATUS_SERIES } from './series'
+import ToolIcon from '../ToolIcon'
 
-// Barres empilées par alerte : montre quelles alertes ramènent surtout du bruit
+// Barres empilées par source : montre quelles sources ramènent surtout du bruit
 export default function SourceBars({ sources }) {
-  if (sources.length === 0) return <p className="viz-empty">Aucune alerte pour le moment.</p>
+  if (sources.length === 0) return <p className="viz-empty">Aucune source pour le moment.</p>
 
   return (
     <>
@@ -14,7 +15,7 @@ export default function SourceBars({ sources }) {
           return (
             <li key={source.id}>
               <div className="source-bars-head">
-                <span className="source-bars-name" title={source.name}>{source.name}</span>
+                <span className="source-bars-name" title={source.name}><ToolIcon type={source.tool_type} size={12} /> {source.name}</span>
                 <span className="source-bars-value">
                   {relevance === null ? `${total} article(s)` : `${relevance} % pertinents`}
                 </span>

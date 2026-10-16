@@ -199,6 +199,10 @@
   font-weight: $weight-6;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  svg {
+    vertical-align: -0.1em;
+  }
 }
 
 .source-bars-value {

@@ -34,3 +34,11 @@ export function addTagToArticle(articleId, tagId) {
 export function removeTagFromArticle(articleId, tagId) {
   return apiFetch(`/articles/${articleId}/tags/${tagId}`, { method: 'DELETE' })
 }
+
+// article : { url, title?, published_at?, status?, status_reason? } — le titre est récupéré sur la page s'il est vide
+export function addManualArticle(themeId, article) {
+  return apiFetch('/articles/manual', {
+    method: 'POST',
+    body: JSON.stringify({ theme_id: themeId, ...article }),
+  })
+}

@@ -207,28 +207,179 @@
   }
 }
 
-.google-alert-modal {
-  width: min(100%, 30rem);
-}
+// Fenêtres d'ajout d'outil ou d'article (ToolModal)
+.tool-modal {
+  width: min(100%, 28rem);
+  max-height: calc(100dvh - 2 * #{$spacing-4});
+  overflow-y: auto;
 
-.google-alert-tuto {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-  margin-bottom: $spacing-3;
-  padding-left: $spacing-4;
-  color: var(--text-secondary);
-  font-size: $font-1;
-  line-height: $line-height-2;
+  &--wide {
+    width: min(100%, 32rem);
+  }
 
-  a {
-    color: var(--accent-color, $accent-color);
+  code {
+    padding: 0 0.25em;
+    border-radius: $radius-2;
+    background-color: var(--bg-tertiary);
+    font-family: $font-mono;
+    font-size: 0.92em;
+    overflow-wrap: anywhere;
+  }
+
+  a svg {
+    display: inline;
+    width: 0.8em;
+    height: 0.8em;
+    vertical-align: -0.05em;
+  }
+
+  select {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0 $spacing-2;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-4;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    font: inherit;
   }
 }
 
-
-.google-alert-modal-title {
+.tool-modal-title {
   display: flex;
   align-items: center;
   gap: $spacing-2;
+}
+
+.tool-modal-intro {
+  margin-bottom: $spacing-3;
+  color: var(--text-secondary);
+  font-size: $font-2;
+  line-height: $line-height-2;
+}
+
+// Tutoriel : pastilles numérotées, action en gras, détail en dessous
+.tool-steps {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+  padding: $spacing-3;
+  border-radius: $radius-4;
+  background-color: var(--bg-primary);
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-2;
+  }
+
+  a {
+    color: var(--accent-color, $accent-color);
+    font-weight: $weight-6;
+  }
+}
+
+.tool-steps-number {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: $radius-full;
+  color: #fff;
+  background-color: var(--accent-color, $accent-color);
+  font-size: $font-1;
+  font-weight: $weight-7;
+}
+
+.tool-steps-action {
+  color: var(--text-primary);
+  font-size: $font-2;
+  line-height: $line-height-2;
+}
+
+.tool-steps-detail {
+  margin-top: 0.15rem;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  line-height: $line-height-2;
+}
+
+.tool-modal-optional {
+  color: var(--text-secondary);
+  font-weight: $weight-4;
+}
+
+.tool-modal-warning {
+  color: $orange-700;
+  font-size: $font-1;
+}
+
+.tool-modal-note {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  margin: $spacing-1 0;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  line-height: $line-height-2;
+}
+
+.tool-modal-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: $spacing-2;
+}
+
+.watch-modal-form .tool-modal-label-inline {
+  margin-top: 0;
+}
+
+.tool-syntax {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-3;
+  margin-bottom: $spacing-2;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  list-style: none;
+}
+
+.tool-modal-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  align-self: flex-start;
+  color: var(--accent-color, $accent-color);
+  font-size: $font-2;
+  font-weight: $weight-6;
+}
+
+// Choix à deux options (statut d'un article ajouté à la main)
+.tool-segmented {
+  display: flex;
+  min-height: 2.75rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-4;
+  background-color: var(--bg-primary);
+
+  button {
+    flex: 1;
+    border: 0;
+    border-radius: $radius-3;
+    color: var(--text-secondary);
+    background: transparent;
+    font: inherit;
+    font-size: $font-2;
+    font-weight: $weight-6;
+    cursor: pointer;
+
+    &.is-active {
+      color: #fff;
+      background-color: var(--accent-color, $accent-color);
+    }
+  }
 }

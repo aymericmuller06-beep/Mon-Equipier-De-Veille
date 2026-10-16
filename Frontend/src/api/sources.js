@@ -22,3 +22,13 @@ export function createSource(name, url, themeId, toolType = 'rss') {
 export function syncSource(sourceId) {
   return apiFetch(`/sources/${sourceId}/sync`, { method: 'POST' })
 }
+
+// Crée la source puis lance une première synchronisation ; une synchro en échec ne bloque pas la création
+export async function createSourceAndSync(name, url, themeId, toolType) {
+  const source = await createSource(name, url, themeId, toolType)
+  try {
+    return { source, syncResult: await syncSource(source.id), syncError: '' }
+  } catch (err) {
+    return { source, syncResult: null, syncError: err.message }
+  }
+}

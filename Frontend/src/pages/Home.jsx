@@ -4,7 +4,6 @@ import VeilleLayout from '../Components/VeilleLayout'
 import StatusDonut from '../Components/charts/StatusDonut'
 import DailyColumns from '../Components/charts/DailyColumns'
 import SourceBars from '../Components/charts/SourceBars'
-import GoogleLogo from '../Components/GoogleLogo'
 import { useWatch } from '../Context/useWatch'
 import { getStats } from '../api/stats'
 import { getArticles, updateArticle } from '../api/articles'
@@ -104,7 +103,7 @@ export default function Home() {
           <Kpi label="Taux de pertinence" value={relevance} hint="validés / triés" />
           <Kpi label="Collectés (7 j)" value={stats.collected_7d} />
           <Kpi label="Triés (7 j)" value={stats.processed_7d} />
-          <Kpi label={<><GoogleLogo size={13} /> Alertes Google</>} value={stats.by_source.length} />
+          <Kpi label="Sources" value={stats.by_source.filter((source) => source.tool_type !== 'manual').length} />
         </div>
 
         <section className="dash-card dash-card--donut" aria-labelledby="dash-donut-title">
@@ -118,7 +117,7 @@ export default function Home() {
         </section>
 
         <section className="dash-card dash-card--sources" aria-labelledby="dash-sources-title">
-          <h2 id="dash-sources-title">Pertinence par alerte</h2>
+          <h2 id="dash-sources-title">Pertinence par source</h2>
           <SourceBars sources={stats.by_source} />
         </section>
 

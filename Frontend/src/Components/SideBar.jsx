@@ -1,31 +1,33 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Home, LayoutGrid, Settings2, LayoutDashboard, Inbox, CheckCircle2, Trash2, PlusCircle } from 'lucide-react'
-import GoogleLogo from './GoogleLogo'
+import ToolIcon from './ToolIcon'
 import { ThemeToggle } from './ThemeToggle'
 import { useWatch } from '../Context/useWatch'
 import { getSources } from '../api/sources'
+import { TOOLS, toolPath } from '../utils/tools'
 
-// Mémorise par veille la présence d'alertes pour éviter tout délai d'affichage quand la barre est recréée
-const googleAlertsCache = new Map()
+// Mémorise par veille les outils utilisés pour éviter tout délai d'affichage quand la barre est recréée
+const toolTypesCache = new Map()
 
 export default function SideBar() {
   const [activePanel, setActivePanel] = useState('menu')
   const { watchTitle, currentWatch } = useWatch()
   const { pathname } = useLocation()
-  const [hasAlertsByWatch, setHasAlertsByWatch] = useState(() => Object.fromEntries(googleAlertsCache))
-  const hasGoogleAlerts = currentWatch ? hasAlertsByWatch[currentWatch.id] ?? false : false
+  const [toolTypesByWatch, setToolTypesByWatch] = useState(() => Object.fromEntries(toolTypesCache))
+  const usedTypes = currentWatch ? toolTypesByWatch[currentWatch.id] ?? [] : []
+  const usedTools = TOOLS.filter((tool) => usedTypes.includes(tool.type))
 
   // La catégorie "Outils" ne doit apparaître que si au moins un outil a été ajouté
   useEffect(() => {
     if (!currentWatch) return
     let cancelled = false
 
-    getSources(currentWatch.id, 'google_alerts')
+    getSources(currentWatch.id)
       .then((data) => {
-        const has = data.length > 0
-        googleAlertsCache.set(currentWatch.id, has)
-        if (!cancelled) setHasAlertsByWatch((current) => ({ ...current, [currentWatch.id]: has }))
+        const types = [...new Set(data.map((source) => source.tool_type))]
+        toolTypesCache.set(currentWatch.id, types)
+        if (!cancelled) setToolTypesByWatch((current) => ({ ...current, [currentWatch.id]: types }))
       })
       .catch(() => {})
 
@@ -106,18 +108,20 @@ export default function SideBar() {
             </li>
           </ul>
 
-          {hasGoogleAlerts && (
+          {usedTools.length > 0 && (
             <>
               <span className="sidebar-nav-separator" role="separator" />
 
               <span className="sidebar-nav-section">Outils</span>
               <ul>
-                <li>
-                  <Link className={linkClass('/veille/outils/google-alerts')} to="/veille/outils/google-alerts" aria-current={pathname === '/veille/outils/google-alerts' ? 'page' : undefined}>
-                    <GoogleLogo size={18} />
-                    <span>Google Alerts</span>
-                  </Link>
-                </li>
+                {usedTools.map((tool) => (
+                  <li key={tool.type}>
+                    <Link className={linkClass(toolPath(tool))} to={toolPath(tool)} aria-current={pathname === toolPath(tool) ? 'page' : undefined}>
+                      <ToolIcon type={tool.type} size={18} />
+                      <span>{tool.label}</span>
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </>
           )}

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
 import ArticleTicket from './ArticleTicket'
 import ConfirmModal from './ConfirmModal'
+import ManualArticleModal from './ManualArticleModal'
 import { useWatch } from '../Context/useWatch'
-import { addTagToArticle, emptyTrash, getArticles, removeTagFromArticle, updateArticle } from '../api/articles'
+import { addManualArticle, addTagToArticle, emptyTrash, getArticles, removeTagFromArticle, updateArticle } from '../api/articles'
 import { createTag, getTags } from '../api/tags'
 
 const TAB_LABELS = { new: 'À traiter', validated: 'Validés', trash: 'Corbeille', all: 'Tous' }
@@ -27,7 +29,8 @@ function matchesSearch(article, query) {
 
 // Liste d'articles sous forme de tickets, avec filtres et annulation de la dernière action.
 // `statuses` : onglets affichés (un seul = page à statut fixe). `toolType` : limite à un outil.
-export default function ArticleBoard({ statuses, toolType, refreshKey = 0 }) {
+// `canAddManual` : affiche le bouton d'ajout manuel (l'article est ajouté avec le premier statut des onglets).
+export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAddManual = false }) {
   const { currentWatch } = useWatch()
   const [articles, setArticles] = useState([])
   const [tags, setTags] = useState([])
@@ -40,6 +43,7 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0 }) {
   const [sort, setSort] = useState('recent')
   const [toast, setToast] = useState(null)
   const [isEmptyTrashOpen, setEmptyTrashOpen] = useState(false)
+  const [isManualOpen, setManualOpen] = useState(false)
 
   useEffect(() => {
     if (!currentWatch) return
@@ -105,6 +109,13 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0 }) {
   const handleRemoveTag = async (article, tag) => {
     await removeTagFromArticle(article.id, tag.id)
     replaceArticle({ ...article, tags: article.tags.filter((item) => item.id !== tag.id) })
+  }
+
+  const handleManualCreate = async (article) => {
+    const created = await addManualArticle(currentWatch.id, article)
+    setArticles((current) => [created, ...current])
+    setManualOpen(false)
+    setToast({ message: `« ${created.title} » ajouté.` })
   }
 
   const handleEmptyTrash = async () => {
@@ -193,6 +204,11 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0 }) {
           <option value="oldest">Plus anciens</option>
         </select>
         <span className="board-count">{visible.length} article(s)</span>
+        {canAddManual && (
+          <button type="button" className="ticket-button ticket-button--primary board-add-button" onClick={() => setManualOpen(true)}>
+            <Plus aria-hidden="true" /> Ajouter un article
+          </button>
+        )}
         {activeStatus === 'trash' && !toolType && counts.trash > 0 && (
           <button type="button" className="ticket-button ticket-button--danger" onClick={() => setEmptyTrashOpen(true)}>
             Vider la corbeille
@@ -225,9 +241,16 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0 }) {
       {toast && (
         <div className="board-toast" role="status">
           <span>{toast.message}</span>
-          <button type="button" onClick={handleUndo}>Annuler</button>
+          {toast.undo && <button type="button" onClick={handleUndo}>Annuler</button>}
         </div>
       )}
+
+      <ManualArticleModal
+        isOpen={isManualOpen}
+        onClose={() => setManualOpen(false)}
+        onCreate={handleManualCreate}
+        defaultStatus={statuses[0] === 'validated' ? 'validated' : 'new'}
+      />
 
       <ConfirmModal
         isOpen={isEmptyTrashOpen}

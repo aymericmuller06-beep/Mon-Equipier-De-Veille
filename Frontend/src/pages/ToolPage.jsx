@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import VeilleLayout from '../Components/VeilleLayout'
 import ArticleBoard from '../Components/ArticleBoard'
-import GoogleLogo from '../Components/GoogleLogo'
+import ToolIcon from '../Components/ToolIcon'
 import { useWatch } from '../Context/useWatch'
-import { getSources, syncSource } from '../api/sources'
+import { createSourceAndSync, getSources, syncSource } from '../api/sources'
+import { formatSyncResult } from '../utils/tools'
 
-export default function GoogleAlerts() {
+// Page d'un outil à flux (Google Alerts, Google News, YouTube…) : ses flux, leur synchro et leurs articles
+export default function ToolPage({ tool }) {
   const { currentWatch } = useWatch()
   const location = useLocation()
   const initialSync = location.state?.syncResult
@@ -16,22 +19,21 @@ export default function GoogleAlerts() {
   const [error, setError] = useState('')
   const [syncing, setSyncing] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [syncMessage, setSyncMessage] = useState(
-    initialSync ? `${initialSync.inserted} nouvel(s) article(s) importé(s) (${initialSync.fetched} trouvés dans le flux).` : ''
-  )
+  const [isAddOpen, setAddOpen] = useState(false)
+  const [syncMessage, setSyncMessage] = useState(initialSync ? formatSyncResult(initialSync) : '')
   const [syncError, setSyncError] = useState(location.state?.syncError || '')
 
   useEffect(() => {
     if (!currentWatch) return
     let cancelled = false
-    getSources(currentWatch.id, 'google_alerts')
+    getSources(currentWatch.id, tool.type)
       .then((data) => { if (!cancelled) setSources(data) })
       .catch((err) => { if (!cancelled) setError(err.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [currentWatch])
+  }, [currentWatch, tool.type])
 
-  // Synchronise toutes les alertes d'un coup, puis recharge les tickets
+  // Synchronise tous les flux de l'outil d'un coup, puis recharge les tickets
   const handleSyncAll = async () => {
     setSyncing(true)
     setSyncError('')
@@ -51,11 +53,22 @@ export default function GoogleAlerts() {
     setSyncing(false)
   }
 
+  const handleCreate = async (name, url) => {
+    const { source, syncResult, syncError: newSyncError } = await createSourceAndSync(name, url, currentWatch.id, tool.type)
+    setSources((current) => [...current, source])
+    setSyncMessage(syncResult ? `« ${source.name} » ajouté : ${formatSyncResult(syncResult)}` : '')
+    setSyncError(newSyncError)
+    setRefreshKey((key) => key + 1)
+    setAddOpen(false)
+  }
+
+  const { Modal } = tool
+
   return (
     <VeilleLayout>
-      <h1 className="page-title-with-logo"><GoogleLogo size={30} /> Google Alerts</h1>
+      <h1 className="page-title-with-logo"><ToolIcon type={tool.type} size={30} /> {tool.label}</h1>
       <p className="dashboard-subtitle">
-        Les articles de vos alertes Google. Synchronisation automatique toutes les heures, ou à la demande.
+        {tool.subtitle} Synchronisation automatique toutes les heures, ou à la demande.
       </p>
 
       {error && <p className="watch-selection-error">{error}</p>}
@@ -65,12 +78,17 @@ export default function GoogleAlerts() {
       ) : sources.length > 0 ? (
         <>
           <div className="alerts-bar">
-            <ul className="alerts-list" aria-label="Alertes">
+            <ul className="alerts-list" aria-label={tool.feedsLabel}>
               {sources.map((source) => (
                 <li key={source.id}>
                   <a href={source.url} target="_blank" rel="noreferrer" title="Ouvrir le flux RSS">{source.name}</a>
                 </li>
               ))}
+              <li className="alerts-list-add">
+                <button type="button" onClick={() => setAddOpen(true)}>
+                  <Plus aria-hidden="true" /> {tool.addLabel}
+                </button>
+              </li>
             </ul>
             <button type="button" className="add-tool-sync-button" onClick={handleSyncAll} disabled={syncing}>
               {syncing ? 'Synchronisation…' : 'Tout synchroniser'}
@@ -79,14 +97,19 @@ export default function GoogleAlerts() {
           {syncError && <p className="watch-selection-error">{syncError}</p>}
           {syncMessage && <p className="add-tool-sync-message">{syncMessage}</p>}
 
-          <ArticleBoard statuses={['new', 'validated', 'trash', 'all']} toolType="google_alerts" refreshKey={refreshKey} />
+          <ArticleBoard statuses={['new', 'validated', 'trash', 'all']} toolType={tool.type} refreshKey={refreshKey} />
         </>
       ) : (
         <div className="empty-state">
-          <p>Aucune alerte Google pour le moment.</p>
-          <span>Ajoutez-en une depuis <Link to="/veille/ajouter-un-outil">Ajouter un outil</Link>.</span>
+          <p>{tool.emptyLabel}</p>
+          <span>
+            <button type="button" className="link-button" onClick={() => setAddOpen(true)}>{tool.addLabel}</button>
+            {' '}ou parcourez les autres outils dans <Link to="/veille/ajouter-un-outil">Ajouter un outil</Link>.
+          </span>
         </div>
       )}
+
+      <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} onCreate={handleCreate} />
     </VeilleLayout>
   )
 }

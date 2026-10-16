@@ -1,46 +1,58 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import VeilleLayout from '../Components/VeilleLayout'
-import GoogleAlertModal from '../Components/GoogleAlertModal'
-import GoogleLogo from '../Components/GoogleLogo'
+import ManualArticleModal from '../Components/ManualArticleModal'
+import ToolIcon from '../Components/ToolIcon'
 import { useWatch } from '../Context/useWatch'
-import { createSource, syncSource } from '../api/sources'
+import { addManualArticle } from '../api/articles'
+import { createSourceAndSync } from '../api/sources'
+import { TOOLS, toolPath } from '../utils/tools'
 
 export default function AddTool() {
   const { currentWatch } = useWatch()
   const navigate = useNavigate()
-  const [isGoogleAlertOpen, setGoogleAlertOpen] = useState(false)
+  const [openTool, setOpenTool] = useState(null)
+  const [isManualOpen, setManualOpen] = useState(false)
 
-  const handleCreateGoogleAlert = async (name, url) => {
-    const created = await createSource(name, url, currentWatch.id, 'google_alerts')
-    let syncResult = null
-    let syncError = ''
-    try {
-      syncResult = await syncSource(created.id)
-    } catch (err) {
-      syncError = err.message
-    }
-    setGoogleAlertOpen(false)
-    navigate('/veille/outils/google-alerts', { state: { syncResult, syncError } })
+  const handleCreate = async (name, url) => {
+    const { syncResult, syncError } = await createSourceAndSync(name, url, currentWatch.id, openTool.type)
+    navigate(toolPath(openTool), { state: { syncResult, syncError } })
   }
+
+  const handleManualCreate = async (article) => {
+    const created = await addManualArticle(currentWatch.id, article)
+    navigate(created.status === 'validated' ? '/veille/articles-valides' : '/veille/nouveaux-articles')
+  }
+
+  const Modal = openTool?.Modal
 
   return (
     <VeilleLayout>
       <h1>Ajouter un outil</h1>
       <p className="dashboard-subtitle">
         Connectez un outil de veille à {currentWatch ? <>la veille « {currentWatch.name} »</> : 'votre veille'}.
+        Vous pouvez ajouter plusieurs flux par outil.
       </p>
 
       <div className="tool-card-grid">
-        <button
-          type="button"
-          className="tool-card"
-          onClick={() => setGoogleAlertOpen(true)}
-          disabled={!currentWatch}
-        >
-          <GoogleLogo size={28} className="tool-card-icon" />
-          <span className="tool-card-title">Google Alerts</span>
-          <span className="tool-card-description">Suivez les alertes Google via leur flux RSS.</span>
+        {TOOLS.map((tool) => (
+          <button
+            key={tool.type}
+            type="button"
+            className="tool-card"
+            onClick={() => setOpenTool(tool)}
+            disabled={!currentWatch}
+          >
+            <ToolIcon type={tool.type} size={28} className="tool-card-icon" />
+            <span className="tool-card-title">{tool.label}</span>
+            <span className="tool-card-description">{tool.description}</span>
+          </button>
+        ))}
+
+        <button type="button" className="tool-card" onClick={() => setManualOpen(true)} disabled={!currentWatch}>
+          <ToolIcon type="manual" size={28} className="tool-card-icon" />
+          <span className="tool-card-title">Ajout manuel</span>
+          <span className="tool-card-description">Ajoutez un article, une vidéo ou une page trouvés par vous-même.</span>
         </button>
 
         <div className="tool-card tool-card--soon" aria-disabled="true">
@@ -49,12 +61,8 @@ export default function AddTool() {
         </div>
       </div>
 
-      <GoogleAlertModal
-        isOpen={isGoogleAlertOpen}
-        onClose={() => setGoogleAlertOpen(false)}
-        onCreate={handleCreateGoogleAlert}
-      />
+      {Modal && <Modal isOpen onClose={() => setOpenTool(null)} onCreate={handleCreate} />}
+      <ManualArticleModal isOpen={isManualOpen} onClose={() => setManualOpen(false)} onCreate={handleManualCreate} />
     </VeilleLayout>
   )
 }
-

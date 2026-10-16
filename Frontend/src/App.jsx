@@ -8,7 +8,8 @@ import NewArticles from './pages/NewArticles'
 import ValidatedArticles from './pages/ValidatedArticles'
 import Trash from './pages/Trash'
 import AddTool from './pages/AddTool'
-import GoogleAlerts from './pages/GoogleAlerts'
+import ToolPage from './pages/ToolPage'
+import { TOOLS, toolPath } from './utils/tools'
 
 function App() {
   return (
@@ -23,7 +24,9 @@ function App() {
               <Route path="/veille/nouveaux-articles" element={<NewArticles />} />
               <Route path="/veille/articles-valides" element={<ValidatedArticles />} />
               <Route path="/veille/corbeille" element={<Trash />} />
-              <Route path="/veille/outils/google-alerts" element={<GoogleAlerts />} />
+              {TOOLS.map((tool) => (
+                <Route key={tool.type} path={toolPath(tool)} element={<ToolPage key={tool.type} tool={tool} />} />
+              ))}
               <Route path="/veille/ajouter-un-outil" element={<AddTool />} />
             </Routes>
           </main>

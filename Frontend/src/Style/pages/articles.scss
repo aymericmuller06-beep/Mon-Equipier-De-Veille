@@ -192,6 +192,59 @@
   }
 }
 
+.alerts-list .alerts-list-add {
+  padding: 0;
+  border-style: dashed;
+  background: transparent;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: $spacing-1 $spacing-3;
+    border: 0;
+    color: var(--text-secondary);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--accent-color, $accent-color);
+    }
+  }
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+}
+
+.board-add-button {
+  margin-left: auto;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  color: var(--accent-color, $accent-color);
+  background: transparent;
+  font: inherit;
+  font-weight: $weight-6;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+// Couleur propre aux icônes d'outils dessinées avec lucide
+.tool-icon {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+}
+
+.tool-card .tool-icon {
+  color: var(--accent-color, $accent-color);
+}
+
+
 .home-content h1.page-title-with-logo {
   display: flex;
   align-items: center;
