@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import VeilleLayout from '../Components/VeilleLayout'
 import ArticleBoard from '../Components/ArticleBoard'
 import ToolIcon from '../Components/ToolIcon'
+import SourceSettingsModal from '../Components/SourceSettingsModal'
 import { useWatch } from '../Context/useWatch'
-import { createSourceAndSync, getSources, syncSource } from '../api/sources'
+import { createSourceAndSync, getSources, syncSource, updateSource } from '../api/sources'
 import { formatSyncResult } from '../utils/tools'
 
 // Page d'un outil à flux (Google Alerts, Google News, YouTube…) : ses flux, leur synchro et leurs articles
@@ -20,6 +21,7 @@ export default function ToolPage({ tool }) {
   const [syncing, setSyncing] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [isAddOpen, setAddOpen] = useState(false)
+  const [editedSource, setEditedSource] = useState(null)
   const [syncMessage, setSyncMessage] = useState(initialSync ? formatSyncResult(initialSync) : '')
   const [syncError, setSyncError] = useState(location.state?.syncError || '')
 
@@ -53,13 +55,22 @@ export default function ToolPage({ tool }) {
     setSyncing(false)
   }
 
-  const handleCreate = async (name, url) => {
-    const { source, syncResult, syncError: newSyncError } = await createSourceAndSync(name, url, currentWatch.id, tool.type)
+  const handleCreate = async (name, url, filters) => {
+    const { source, syncResult, syncError: newSyncError } = await createSourceAndSync(name, url, currentWatch.id, tool.type, filters)
     setSources((current) => [...current, source])
     setSyncMessage(syncResult ? `« ${source.name} » ajouté : ${formatSyncResult(syncResult)}` : '')
     setSyncError(newSyncError)
     setRefreshKey((key) => key + 1)
     setAddOpen(false)
+  }
+
+  const handleSaveSource = async (changes) => {
+    const { trashed, ...updated } = await updateSource(editedSource.id, changes)
+    setSources((current) => current.map((source) => (source.id === updated.id ? updated : source)))
+    setSyncError('')
+    setSyncMessage(`« ${updated.name} » mis à jour${trashed ? ` : ${trashed} article(s) envoyé(s) à la corbeille` : ''}.`)
+    if (trashed) setRefreshKey((key) => key + 1)
+    setEditedSource(null)
   }
 
   const { Modal } = tool
@@ -80,8 +91,16 @@ export default function ToolPage({ tool }) {
           <div className="alerts-bar">
             <ul className="alerts-list" aria-label={tool.feedsLabel}>
               {sources.map((source) => (
-                <li key={source.id}>
+                <li key={source.id} className={source.include_keywords || source.exclude_keywords ? 'is-filtered' : ''}>
                   <a href={source.url} target="_blank" rel="noreferrer" title="Ouvrir le flux RSS">{source.name}</a>
+                  <button
+                    type="button"
+                    onClick={() => setEditedSource(source)}
+                    aria-label={`Réglages et filtres de « ${source.name} »`}
+                    title={source.include_keywords || source.exclude_keywords ? 'Filtres actifs — modifier' : 'Réglages et filtres'}
+                  >
+                    <SlidersHorizontal aria-hidden="true" />
+                  </button>
                 </li>
               ))}
               <li className="alerts-list-add">
@@ -110,6 +129,7 @@ export default function ToolPage({ tool }) {
       )}
 
       <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} onCreate={handleCreate} />
+      <SourceSettingsModal source={editedSource} onClose={() => setEditedSource(null)} onSave={handleSaveSource} />
     </VeilleLayout>
   )
 }

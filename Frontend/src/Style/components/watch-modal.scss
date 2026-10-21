@@ -194,8 +194,8 @@
   line-height: $line-height-2;
 }
 
-// Variante destructrice, ex. suppression définitive
-.watch-selection-submit--danger {
+// Variante destructrice, ex. suppression définitive (double classe : passe devant watch-selection.scss)
+.watch-selection-submit.watch-selection-submit--danger {
   background-color: $red-600;
 
   &:hover {
@@ -382,4 +382,57 @@
       background-color: var(--accent-color, $accent-color);
     }
   }
+}
+
+.watch-modal-form .tool-modal-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  margin: $spacing-1 0;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  font-weight: $weight-4;
+  cursor: pointer;
+
+  input {
+    width: auto;
+    min-height: 0;
+    margin-top: 0.15rem;
+  }
+}
+
+// Les fenêtres s'ouvrent dans .home-content, dont la règle `p` (taille 3, gris) écraserait ces textes
+.home-content .watch-modal {
+  p.tool-modal-intro,
+  p.tool-steps-action {
+    font-size: $font-2;
+  }
+
+  p.tool-steps-action,
+  p.decision-article {
+    color: var(--text-primary);
+  }
+
+  p.decision-article {
+    font-size: $font-3;
+  }
+
+  p.tool-modal-note,
+  p.tool-steps-detail,
+  p.tool-modal-warning {
+    font-size: $font-1;
+  }
+
+  p.tool-modal-warning {
+    color: $orange-700;
+  }
+
+  .tool-modal-note p {
+    font-size: $font-1;
+  }
+}
+
+// Un libellé qui suit un champ est séparé de lui
+.watch-modal-form :is(input, textarea, select, .tool-syntax, .tool-modal-warning, .tool-modal-row) + label {
+  margin-top: $spacing-2;
 }

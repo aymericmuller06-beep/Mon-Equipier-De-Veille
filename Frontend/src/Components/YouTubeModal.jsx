@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 import YouTubeLogo from './YouTubeLogo'
 import ToolModal, { ToolSteps } from './ToolModal'
+import KeywordFilterFields from './KeywordFilterFields'
 import { resolveYouTube } from '../api/tools'
 
 const STEPS = [
@@ -17,6 +18,8 @@ const STEPS = [
 function YouTubeModalContent({ onClose, onCreate }) {
   const [url, setUrl] = useState('')
   const [name, setName] = useState('')
+  const [include, setInclude] = useState('')
+  const [exclude, setExclude] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -29,7 +32,10 @@ function YouTubeModalContent({ onClose, onCreate }) {
     try {
       // Le serveur retrouve le flux RSS de la chaîne et son nom exact
       const resolved = await resolveYouTube(url.trim())
-      await onCreate((name.trim() || resolved.name).slice(0, 150), resolved.feed_url)
+      await onCreate((name.trim() || resolved.name).slice(0, 150), resolved.feed_url, {
+        include_keywords: include,
+        exclude_keywords: exclude,
+      })
     } catch (err) {
       setFormError(err.message)
       setSubmitting(false)
@@ -63,6 +69,14 @@ function YouTubeModalContent({ onClose, onCreate }) {
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={150}
+        />
+
+        <KeywordFilterFields
+          idPrefix="youtube"
+          include={include}
+          exclude={exclude}
+          onIncludeChange={setInclude}
+          onExcludeChange={setExclude}
         />
 
         <div className="tool-modal-note">

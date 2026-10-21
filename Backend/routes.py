@@ -5,7 +5,8 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
-from sync import sync_source as run_source_sync
+from sync import keyword_filter, sync_source as run_source_sync
+from web import fetch_page_title, resolve_youtube_feed
 
 logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
@@ -50,11 +51,21 @@ def validate_status(status):
     return status in ARTICLE_STATUSES
 
 # Chaque outil ajouté dans la page "Ajouter un outil" doit déclarer son type ici
-TOOL_TYPES = {"rss", "google_alerts"}
+TOOL_TYPES = {"rss", "google_alerts", "google_news", "youtube"}
+# Source créée automatiquement par veille pour accueillir les articles ajoutés à la main
+MANUAL_TOOL_TYPE = "manual"
+MANUAL_SOURCE_NAME = "Ajout manuel"
 
 def validate_tool_type(tool_type):
     """Valide qu'un type d'outil fait partie des types connus"""
     return tool_type in TOOL_TYPES
+
+def read_keywords(data, key):
+    """Liste de mots-clés séparés par des virgules ; None si la valeur est invalide"""
+    value = data.get(key) or ""
+    if not isinstance(value, str) or len(value) > 500:
+        return None
+    return ", ".join(keyword.strip() for keyword in value.split(",") if keyword.strip())
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
@@ -228,11 +239,15 @@ def add_source():
     if not validate_tool_type(tool_type):
         logger.warning(f"Type d'outil invalide rejeté: '{tool_type}'")
         return jsonify({"error": "Type d'outil invalide"}), 400
+    include_keywords = read_keywords(data, "include_keywords")
+    exclude_keywords = read_keywords(data, "exclude_keywords")
+    if include_keywords is None or exclude_keywords is None:
+        return jsonify({"error": "Les mots-clés doivent faire au maximum 500 caractères"}), 400
     db = get_db()
     try:
         cursor = db.execute(
-            "INSERT INTO sources (name, url, theme_id, tool_type) VALUES (?, ?, ?, ?)",
-            (data["name"], data["url"], data["theme_id"], tool_type)
+            "INSERT INTO sources (name, url, theme_id, tool_type, include_keywords, exclude_keywords) VALUES (?, ?, ?, ?, ?, ?)",
+            (data["name"], data["url"], data["theme_id"], tool_type, include_keywords, exclude_keywords)
         )
         db.commit()
         logger.info(f"✓ Source créée: '{data['name']}' (ID: {cursor.lastrowid}, theme_id: {data['theme_id']}, tool_type: {tool_type})")
@@ -241,7 +256,9 @@ def add_source():
             "name": data["name"],
             "url": data["url"],
             "theme_id": data["theme_id"],
-            "tool_type": tool_type
+            "tool_type": tool_type,
+            "include_keywords": include_keywords,
+            "exclude_keywords": exclude_keywords,
         }), 201
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur création source '{data['name']}': {str(e)}")
@@ -283,6 +300,47 @@ def update_source(source_id):
         logger.warning(f"✗ Erreur modification source {source_id}: {str(e)}")
         return jsonify({"error": "Source en doublon"}), 400
 
+@api.route("/sources/<int:source_id>", methods=["PATCH"])
+def patch_source(source_id):
+    """Renomme une source et/ou change ses filtres ; `apply_to_existing` envoie à la corbeille
+    les articles à traiter qui ne passent plus les filtres (sur leur titre)"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Aucune modification fournie"}), 400
+    db = get_db()
+    source = db.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone()
+    if source is None:
+        return jsonify({"error": "Source non trouvée"}), 404
+
+    name = data.get("name", source["name"])
+    if not validate_length(name or "", min_len=1, max_len=150):
+        return jsonify({"error": "Le nom doit avoir entre 1 et 150 caractères"}), 400
+    include_keywords = read_keywords(data, "include_keywords") if "include_keywords" in data else source["include_keywords"]
+    exclude_keywords = read_keywords(data, "exclude_keywords") if "exclude_keywords" in data else source["exclude_keywords"]
+    if include_keywords is None or exclude_keywords is None:
+        return jsonify({"error": "Les mots-clés doivent faire au maximum 500 caractères"}), 400
+
+    db.execute(
+        "UPDATE sources SET name = ?, include_keywords = ?, exclude_keywords = ? WHERE id = ?",
+        (name.strip(), include_keywords, exclude_keywords, source_id)
+    )
+
+    trashed = 0
+    if data.get("apply_to_existing"):
+        matches = keyword_filter(include_keywords, exclude_keywords)
+        pending = db.execute("SELECT id, title FROM articles WHERE source_id = ? AND status = 'new'", (source_id,)).fetchall()
+        rejected = [(now_iso(), row["id"]) for row in pending if not matches(row["title"])]
+        db.executemany(
+            "UPDATE articles SET status = 'trash', status_reason = 'Écarté par les filtres de la source', status_changed_at = ? WHERE id = ?",
+            rejected
+        )
+        trashed = len(rejected)
+
+    db.commit()
+    logger.info(f"✓ Source {source_id} modifiée ({trashed} article(s) écarté(s) par les filtres)")
+    updated = dict(db.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone())
+    return jsonify({**updated, "trashed": trashed}), 200
+
 @api.route("/sources/<int:source_id>/sync", methods=["POST"])
 def sync_source(source_id):
     db = get_db()
@@ -290,6 +348,8 @@ def sync_source(source_id):
     if source is None:
         logger.warning(f"✗ Source {source_id} non trouvée pour synchronisation")
         return jsonify({"error": "Source non trouvée"}), 404
+    if source["tool_type"] == MANUAL_TOOL_TYPE:
+        return jsonify({"error": "Les articles ajoutés à la main n'ont pas de flux à synchroniser"}), 400
 
     try:
         result = run_source_sync(source)
@@ -439,6 +499,62 @@ def add_article():
     except sqlite3.IntegrityError as e:
         logger.warning(f"✗ Erreur création article: {str(e)}")
         return jsonify({"error": "Article en doublon"}), 400
+
+@api.route("/articles/manual", methods=["POST"])
+def add_manual_article():
+    """Ajoute à une veille un article trouvé soi-même ; le titre est récupéré sur la page s'il est omis"""
+    data = request.get_json()
+    if not data or not all(k in data for k in ("url", "theme_id")):
+        return jsonify({"error": "Les champs 'url' et 'theme_id' sont requis"}), 400
+    url = (data["url"] or "").strip()
+    if not validate_url(url):
+        return jsonify({"error": "URL invalide. Format attendu: https://example.com"}), 400
+    if not id_exists("themes", data["theme_id"]):
+        return jsonify({"error": "Thème inexistant"}), 404
+    status = data.get("status") or "new"
+    if status not in ("new", "validated"):
+        return jsonify({"error": "Statut invalide"}), 400
+    reason = (data.get("status_reason") or "").strip()
+    if not validate_length(reason, min_len=0, max_len=2000):
+        return jsonify({"error": "La note doit faire au maximum 2000 caractères"}), 400
+    published_at = None
+    if data.get("published_at"):
+        try:
+            # Midi UTC : la date choisie reste la même quel que soit le fuseau d'affichage
+            published_at = datetime.fromisoformat(data["published_at"]).replace(hour=12, tzinfo=timezone.utc).isoformat()
+        except (TypeError, ValueError):
+            return jsonify({"error": "Date de publication invalide"}), 400
+
+    db = get_db()
+    duplicate = db.execute("""
+        SELECT articles.status FROM articles JOIN sources ON sources.id = articles.source_id
+        WHERE sources.theme_id = ? AND articles.url = ?
+    """, (data["theme_id"], url)).fetchone()
+    if duplicate:
+        where = {"new": "dans les articles à traiter", "validated": "parmi les articles validés", "trash": "dans la corbeille"}[duplicate["status"]]
+        return jsonify({"error": f"Cet article est déjà dans la veille, {where}."}), 409
+
+    title = (data.get("title") or "").strip() or fetch_page_title(url) or urlparse(url).netloc
+    title = title[:300]
+
+    source = db.execute(
+        "SELECT id FROM sources WHERE theme_id = ? AND tool_type = ?", (data["theme_id"], MANUAL_TOOL_TYPE)
+    ).fetchone()
+    source_id = source["id"] if source else db.execute(
+        "INSERT INTO sources (name, url, theme_id, tool_type) VALUES (?, '', ?, ?)",
+        (MANUAL_SOURCE_NAME, data["theme_id"], MANUAL_TOOL_TYPE)
+    ).lastrowid
+
+    now = now_iso()
+    cursor = db.execute("""
+        INSERT INTO articles (title, url, published_at, source_id, status, status_reason, created_at, status_changed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (title, url, published_at, source_id, status, reason, now, now if status != "new" else None))
+    # Un article ajouté à la main puis supprimé peut être ajouté de nouveau
+    db.execute("DELETE FROM dismissed_articles WHERE source_id = ? AND url = ?", (source_id, url))
+    db.commit()
+    logger.info(f"✓ Article ajouté manuellement: '{title}' (ID: {cursor.lastrowid}, veille: {data['theme_id']})")
+    return jsonify(get_full_article(db, cursor.lastrowid)), 201
 
 @api.route("/articles/<int:article_id>", methods=["PUT"])
 def update_article(article_id):
@@ -616,7 +732,7 @@ def get_stats():
     ]
 
     by_source = [dict(row) for row in db.execute("""
-        SELECT sources.id, sources.name,
+        SELECT sources.id, sources.name, sources.tool_type,
             SUM(articles.status = 'new') AS new,
             SUM(articles.status = 'validated') AS validated,
             SUM(articles.status = 'trash') AS trash
@@ -651,6 +767,23 @@ def get_stats():
         "collected_7d": collected_7d,
         "processed_7d": processed_7d,
     })
+
+# ==================== OUTILS ====================
+@api.route("/tools/youtube/resolve", methods=["POST"])
+def resolve_youtube():
+    """Trouve le flux RSS d'une chaîne ou d'une playlist YouTube à partir de son lien"""
+    data = request.get_json()
+    url = (data or {}).get("url", "").strip()
+    if not url:
+        return jsonify({"error": "Le champ 'url' est requis"}), 400
+    try:
+        feed_url, name = resolve_youtube_feed(url)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.warning(f"✗ Résolution YouTube impossible pour '{url}': {e}")
+        return jsonify({"error": "Impossible de joindre YouTube. Vérifiez le lien et réessayez."}), 502
+    return jsonify({"feed_url": feed_url, "name": name})
 
 # ==================== SYSTEME ====================
 @api.route("/system/reset", methods=["POST"])

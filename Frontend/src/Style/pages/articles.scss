@@ -110,11 +110,10 @@
   font-size: $font-1;
 }
 
-.ticket-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
-  gap: $spacing-3;
-  align-items: start;
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
 }
 
 .board-toast {
@@ -189,6 +188,40 @@
     &:hover {
       color: var(--accent-color, $accent-color);
     }
+  }
+}
+
+.alerts-list li:not(.alerts-list-add) {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding-right: $spacing-1;
+
+  button {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0;
+    border-radius: $radius-full;
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-tertiary);
+    }
+  }
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  // Un flux filtré garde son icône de réglages colorée
+  &.is-filtered button {
+    color: var(--accent-color, $accent-color);
   }
 }
 

@@ -1,16 +1,16 @@
 import html
 import logging
 import re
-import urllib.request
 from calendar import timegm
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, urlparse
 
 import feedparser
 
+from web import fetch
+
 logger = logging.getLogger(__name__)
 
-FETCH_TIMEOUT_SECONDS = 15
 MAX_FEED_BYTES = 5 * 1024 * 1024
 TAG_RE = re.compile(r"<[^>]+>")
 
@@ -30,11 +30,10 @@ def clean_link(link):
     return link
 
 
-def fetch_rss_entries(url, limit=50):
+# Google News renvoie jusqu'à 100 résultats par recherche
+def fetch_rss_entries(url, limit=100):
     """Récupère et normalise les entrées d'un flux RSS/Atom (titre, lien, date)"""
-    request = urllib.request.Request(url, headers={"User-Agent": "EquipierDeVeille/1.0"})
-    with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
-        content = response.read(MAX_FEED_BYTES)
+    content = fetch(url, MAX_FEED_BYTES)
 
     parsed = feedparser.parse(content)
     if parsed.bozo and not parsed.entries:
@@ -52,6 +51,12 @@ def fetch_rss_entries(url, limit=50):
         if time_struct:
             published_at = datetime.fromtimestamp(timegm(time_struct), tz=timezone.utc).isoformat()
 
-        entries.append({"title": clean_title(title), "url": clean_link(link), "published_at": published_at})
+        # Le résumé (description des vidéos YouTube) ne sert qu'aux filtres par mots-clés : il n'est pas stocké
+        entries.append({
+            "title": clean_title(title),
+            "url": clean_link(link),
+            "published_at": published_at,
+            "summary": clean_title(entry.get("summary") or ""),
+        })
 
     return entries

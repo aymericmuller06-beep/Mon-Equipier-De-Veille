@@ -61,6 +61,11 @@ def init_db(app):
         source_columns = [row["name"] for row in db.execute("PRAGMA table_info(sources)").fetchall()]
         if "tool_type" not in source_columns:
             db.execute("ALTER TABLE sources ADD COLUMN tool_type TEXT NOT NULL DEFAULT 'rss'")
+        # Filtres par mots-clés (séparés par des virgules) appliqués à la synchronisation
+        if "include_keywords" not in source_columns:
+            db.execute("ALTER TABLE sources ADD COLUMN include_keywords TEXT NOT NULL DEFAULT ''")
+        if "exclude_keywords" not in source_columns:
+            db.execute("ALTER TABLE sources ADD COLUMN exclude_keywords TEXT NOT NULL DEFAULT ''")
         
         db.execute("""
             CREATE TABLE IF NOT EXISTS articles (

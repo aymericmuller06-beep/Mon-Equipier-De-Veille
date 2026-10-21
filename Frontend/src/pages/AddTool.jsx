@@ -14,8 +14,8 @@ export default function AddTool() {
   const [openTool, setOpenTool] = useState(null)
   const [isManualOpen, setManualOpen] = useState(false)
 
-  const handleCreate = async (name, url) => {
-    const { syncResult, syncError } = await createSourceAndSync(name, url, currentWatch.id, openTool.type)
+  const handleCreate = async (name, url, filters) => {
+    const { syncResult, syncError } = await createSourceAndSync(name, url, currentWatch.id, openTool.type, filters)
     navigate(toolPath(openTool), { state: { syncResult, syncError } })
   }
 

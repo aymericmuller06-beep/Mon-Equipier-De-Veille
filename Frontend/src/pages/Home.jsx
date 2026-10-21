@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import VeilleLayout from '../Components/VeilleLayout'
+import DecisionModal from '../Components/DecisionModal'
 import StatusDonut from '../Components/charts/StatusDonut'
 import DailyColumns from '../Components/charts/DailyColumns'
 import SourceBars from '../Components/charts/SourceBars'
@@ -26,7 +27,7 @@ export default function Home() {
   const [lastValidated, setLastValidated] = useState([])
   const [error, setError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
-  const [busyId, setBusyId] = useState(null)
+  const [pending, setPending] = useState(null)
 
   useEffect(() => {
     if (!currentWatch) return
@@ -48,17 +49,12 @@ export default function Home() {
     return () => { cancelled = true }
   }, [currentWatch, reloadKey])
 
-  // Tri rapide depuis le dashboard ; la note se gère ensuite depuis les pages d'articles
-  const quickDecide = async (article, status) => {
-    setBusyId(article.id)
-    try {
-      await updateArticle(article.id, { status })
-      setReloadKey((key) => key + 1)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setBusyId(null)
-    }
+  // Tri depuis le dashboard : même fenêtre de note que sur les pages d'articles
+  const confirmDecision = async (note) => {
+    const { article, decision } = pending
+    await updateArticle(article.id, { status: decision, status_reason: note })
+    setPending(null)
+    setReloadKey((key) => key + 1)
   }
 
   if (error && !stats) {
@@ -134,10 +130,10 @@ export default function Home() {
                     <a href={article.url} target="_blank" rel="noreferrer">{article.title}</a>
                     <span>{article.source_name} · {formatRelative(article.published_at || article.created_at)}</span>
                   </div>
-                  <button type="button" className="ticket-button ticket-button--small" onClick={() => quickDecide(article, 'trash')} disabled={busyId === article.id} aria-label={`Refuser « ${article.title} »`}>
+                  <button type="button" className="ticket-button ticket-button--small" onClick={() => setPending({ article, decision: 'trash' })} aria-label={`Refuser « ${article.title} »`}>
                     Refuser
                   </button>
-                  <button type="button" className="ticket-button ticket-button--small ticket-button--primary" onClick={() => quickDecide(article, 'validated')} disabled={busyId === article.id} aria-label={`Valider « ${article.title} »`}>
+                  <button type="button" className="ticket-button ticket-button--small ticket-button--primary" onClick={() => setPending({ article, decision: 'validated' })} aria-label={`Valider « ${article.title} »`}>
                     Valider
                   </button>
                 </li>
@@ -175,6 +171,13 @@ export default function Home() {
           )}
         </section>
       </div>
+
+      <DecisionModal
+        article={pending?.article}
+        decision={pending?.decision}
+        onClose={() => setPending(null)}
+        onConfirm={confirmDecision}
+      />
     </VeilleLayout>
   )
 }

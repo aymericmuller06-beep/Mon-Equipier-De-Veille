@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import ArticleTicket from './ArticleTicket'
 import ConfirmModal from './ConfirmModal'
+import DecisionModal from './DecisionModal'
 import ManualArticleModal from './ManualArticleModal'
 import { useWatch } from '../Context/useWatch'
 import { addManualArticle, addTagToArticle, emptyTrash, getArticles, removeTagFromArticle, updateArticle } from '../api/articles'
@@ -44,6 +45,8 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
   const [toast, setToast] = useState(null)
   const [isEmptyTrashOpen, setEmptyTrashOpen] = useState(false)
   const [isManualOpen, setManualOpen] = useState(false)
+  // Article en cours de décision : { article, decision: 'validated' | 'trash' | 'note' }
+  const [pending, setPending] = useState(null)
 
   useEffect(() => {
     if (!currentWatch) return
@@ -82,6 +85,19 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
         undo: async () => replaceArticle(await updateArticle(article.id, previous)),
       })
     }
+  }
+
+  // Valider / refuser passe par la fenêtre de note ; remettre à traiter est immédiat
+  const handleDecide = async (article, status) => {
+    if (status === 'new') return handleUpdate(article, { status })
+    setPending({ article, decision: status })
+  }
+
+  const handleConfirmDecision = async (note) => {
+    const { article, decision } = pending
+    const changes = decision === 'note' ? { status_reason: note } : { status: decision, status_reason: note }
+    await handleUpdate(article, changes)
+    setPending(null)
   }
 
   const handleUndo = async () => {
@@ -219,13 +235,14 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
       {error && <p className="watch-selection-error">{error}</p>}
 
       {visible.length > 0 ? (
-        <div className="ticket-grid">
+        <div className="ticket-list">
           {visible.map((article) => (
             <ArticleTicket
               key={article.id}
               article={article}
               allTags={tags}
-              onUpdate={handleUpdate}
+              onDecide={handleDecide}
+              onEditNote={(item) => setPending({ article: item, decision: 'note' })}
               onAddTag={handleAddTag}
               onRemoveTag={handleRemoveTag}
             />
@@ -244,6 +261,13 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
           {toast.undo && <button type="button" onClick={handleUndo}>Annuler</button>}
         </div>
       )}
+
+      <DecisionModal
+        article={pending?.article}
+        decision={pending?.decision}
+        onClose={() => setPending(null)}
+        onConfirm={handleConfirmDecision}
+      />
 
       <ManualArticleModal
         isOpen={isManualOpen}

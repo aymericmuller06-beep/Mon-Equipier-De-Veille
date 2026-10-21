@@ -1,16 +1,17 @@
-// Ticket d'article
+// Article sur une ligne : contenu à gauche, statut et actions à droite.
+// Toutes les lignes ont la même structure et la même hauteur : titre et note sur une ligne.
 .ticket {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-3;
-  padding-left: calc(#{$spacing-3} + 4px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: $spacing-2 $spacing-4;
+  padding: $spacing-3 $spacing-3 $spacing-3 calc(#{$spacing-3} + 4px);
   overflow: hidden;
   border: 1px solid var(--border-color);
-  border-radius: $radius-5;
+  border-radius: $radius-4;
   background-color: var(--bg-secondary);
-  transition: box-shadow $duration-fast ease, transform $duration-fast ease;
+  transition: box-shadow $duration-fast ease;
 
   // Bandeau de statut à gauche
   &::before {
@@ -25,30 +26,45 @@
   &--trash::before { background-color: var(--viz-trash); }
 
   &:hover {
-    box-shadow: $shadow-3;
-    transform: translateY(-1px);
+    box-shadow: $shadow-2;
   }
 
   &[aria-busy='true'] {
     opacity: 0.7;
   }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-.ticket-meta {
+.ticket-main {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.home-content p.ticket-meta {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: $spacing-2;
+  gap: 0 $spacing-2;
+  color: var(--text-secondary);
+  font-size: $font-1;
+
+  span + span::before {
+    content: '·';
+    margin-right: $spacing-2;
+  }
 }
 
 .ticket-source {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: $spacing-1;
-  min-width: 0;
+  max-width: 16rem;
   overflow: hidden;
-  color: var(--text-secondary);
-  font-size: $font-1;
   font-weight: $weight-6;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -60,28 +76,6 @@
   }
 }
 
-// Le texte reste en couleur de texte, la pastille porte la couleur du statut
-.ticket-status {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  gap: $spacing-1;
-  color: var(--text-secondary);
-  font-size: $font-1;
-  font-weight: $weight-6;
-
-  &::before {
-    content: '';
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: $radius-full;
-    background-color: var(--viz-new);
-  }
-
-  &--validated::before { background-color: var(--viz-validated); }
-  &--trash::before { background-color: var(--viz-trash); }
-}
-
 .ticket-title {
   display: -webkit-box;
   overflow: hidden;
@@ -90,30 +84,20 @@
   font-weight: $weight-7;
   line-height: $line-height-1 + 0.1;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  // Une seule ligne : toutes les lignes ont la même hauteur (titre complet au survol)
+  -webkit-line-clamp: 1;
 
   &:hover {
     color: var(--accent-color, $accent-color);
   }
 }
 
-.home-content p.ticket-dates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 $spacing-2;
-  font-size: $font-1;
-
-  span + span::before {
-    content: '·';
-    margin-right: $spacing-2;
-  }
-}
-
-.ticket-tags {
+.ticket-extra {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: $spacing-1;
+  min-width: 0;
 }
 
 .ticket-tag {
@@ -151,8 +135,7 @@
   }
 }
 
-.ticket-tag-add,
-.ticket-note-add {
+.ticket-tag-add {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -165,20 +148,10 @@
   font-size: $font-1;
   cursor: pointer;
 
-  svg {
-    width: 0.75rem;
-    height: 0.75rem;
-  }
-
   &:hover {
     border-color: var(--accent-color, $accent-color);
     color: var(--text-primary);
   }
-}
-
-.ticket-note-add {
-  width: fit-content;
-  border-radius: $radius-4;
 }
 
 .ticket-tag-form input {
@@ -189,57 +162,6 @@
   outline: 0;
   font: inherit;
   font-size: $font-1;
-}
-
-.ticket-note {
-  display: flex;
-  align-items: flex-start;
-  gap: $spacing-2;
-  width: 100%;
-  padding: $spacing-2;
-  border: 0;
-  border-left: 3px solid var(--border-color);
-  border-radius: $radius-3;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  font: inherit;
-  font-size: $font-2;
-  text-align: left;
-  white-space: pre-wrap;
-  cursor: pointer;
-
-  span:first-child {
-    flex: 1;
-  }
-
-  .ticket-note-edit {
-    flex: 0 0 auto;
-    color: var(--text-secondary);
-    font-size: $font-1;
-    opacity: 0;
-  }
-
-  &:hover .ticket-note-edit,
-  &:focus-visible .ticket-note-edit {
-    opacity: 1;
-  }
-}
-
-.ticket-note-editor {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-
-  textarea {
-    width: 100%;
-    padding: $spacing-2;
-    border: 1px solid var(--accent-color, $accent-color);
-    border-radius: $radius-4;
-    outline: 0;
-    font: inherit;
-    font-size: $font-2;
-    resize: vertical;
-  }
 }
 
 .ticket-presets {
@@ -261,14 +183,13 @@
       border-color: var(--accent-color, $accent-color);
       color: var(--text-primary);
     }
-  }
-}
 
-.ticket-note-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: $spacing-2;
+    &.is-active {
+      border-color: var(--accent-color, $accent-color);
+      color: var(--text-primary);
+      background-color: color-mix(in srgb, var(--accent-color, $accent-color) 16%, var(--bg-secondary));
+    }
+  }
 }
 
 .ticket-hint {
@@ -277,19 +198,99 @@
   font-size: $font-1;
 }
 
+.ticket-note {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  min-width: 0;
+  max-width: min(100%, 32rem);
+  padding: 2px $spacing-2;
+  border: 0;
+  border-radius: $radius-3;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  font: inherit;
+  font-size: $font-1;
+  font-style: italic;
+  cursor: pointer;
+
+  svg {
+    flex: 0 0 auto;
+    width: 0.8rem;
+    height: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background-color: var(--bg-tertiary);
+  }
+}
+
 .home-content p.ticket-error {
   color: $red-600;
   font-size: $font-1;
 }
 
+.ticket-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: $spacing-2;
+
+  @media (max-width: 720px) {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+// Le texte reste en couleur de texte, la pastille porte la couleur du statut
+.ticket-status {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  color: var(--text-secondary);
+  font-size: $font-1;
+  font-weight: $weight-6;
+
+  &::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: $radius-full;
+    background-color: var(--viz-new);
+  }
+
+  &--validated::before { background-color: var(--viz-validated); }
+  &--trash::before { background-color: var(--viz-trash); }
+}
+
 .ticket-actions {
   display: flex;
-  justify-content: flex-end;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: $spacing-2;
-  margin-top: auto;
-  padding-top: $spacing-2;
-  border-top: 1px solid var(--border-color);
+}
+
+// Titre de l'article rappelé dans la fenêtre de décision
+.decision-article {
+  display: -webkit-box;
+  margin-bottom: $spacing-3;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-weight: $weight-6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.watch-modal-actions .ticket-hint {
+  align-self: center;
 }
 
 .ticket-button {

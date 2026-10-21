@@ -41,6 +41,7 @@ export const TOOLS = [
 
 export const toolPath = (tool) => `/veille/outils/${tool.slug}`
 
-export const formatSyncResult = (result) => (
-  `${result.inserted} nouvel(s) article(s) importé(s) (${result.fetched} trouvés dans le flux).`
-)
+export const formatSyncResult = (result) => {
+  const filtered = result.filtered ? `, ${result.filtered} écarté(s) par les filtres` : ''
+  return `${result.inserted} nouvel(s) article(s) importé(s) (${result.fetched} trouvés dans le flux${filtered}).`
+}

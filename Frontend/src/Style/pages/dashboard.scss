@@ -107,6 +107,8 @@
 
 .dash-todo {
   display: grid;
+  // Colonne bornée à la carte : un titre long est tronqué au lieu de pousser les boutons dehors
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: $spacing-1;
 
