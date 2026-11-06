@@ -39,55 +39,223 @@
   margin-bottom: $spacing-4;
 }
 
+// Cartes de la page « Ajouter un outil » (ToolCard).
+// Performance : aucun backdrop-filter ; seules transform et opacity sont animées (gérées par la carte graphique),
+// et le disque ne tourne qu'au survol.
+$tool-card-gutter: $spacing-2;   // marge intérieure autour du panneau et de la colonne de droite
+$tool-card-panel-width: 62%;     // largeur du panneau de verre (sur la zone intérieure)
+
 .tool-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 16rem));
-  gap: $spacing-3;
-  margin-bottom: $spacing-4;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: $spacing-4;
+  margin: $spacing-4 0;
 }
 
 .tool-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: $spacing-1;
-  padding: $spacing-3;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-4;
-  background-color: var(--bg-secondary);
+  --tool-color: var(--accent-color, #{$accent-color});
+  position: relative;
+  isolation: isolate;
+  display: block;
+  height: 20rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+  border-radius: $radius-6;
+  background: none;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: border-color $duration-fast ease, transform $duration-fast ease;
+  transition: transform $duration-base ease;
 
-  &:hover:not(:disabled) {
-    border-color: var(--accent-color, $accent-color);
-    transform: translateY(-2px);
+  // Ombre colorée du survol : on fait varier son opacité plutôt que la box-shadow (pas de redessin)
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 12px 32px color-mix(in srgb, var(--tool-color) 30%, transparent);
+    opacity: 0;
+    transition: opacity $duration-base ease;
   }
 
-  &:disabled,
-  &.tool-card--soon {
-    opacity: 0.6;
+  &:hover:not(:disabled):not(.tool-card--soon) {
+    transform: translateY(-4px);
+
+    &::after {
+      opacity: 1;
+    }
+
+    .tool-card-orb {
+      animation-play-state: running;
+    }
+
+    .tool-card-arrow {
+      background-color: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-color, $accent-color);
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
     cursor: not-allowed;
+  }
+
+  &.tool-card--soon {
+    --tool-color: var(--text-secondary);
+    opacity: 0.7;
+    cursor: default;
   }
 }
 
-.tool-card-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  margin-bottom: $spacing-1;
-  color: var(--accent-color, $accent-color);
+// Couche 1 : liseré de la couleur de l'outil et forme asymétrique (statique)
+.tool-card-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: $spacing-1;
+  border-radius: $radius-6;
+  background-color: var(--tool-color);
+}
+
+.tool-card-shape {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-5 100px 40px $radius-5;
+  background-color: var(--bg-secondary);
+}
+
+// Couche 2 : disque aux couleurs du logo, net ; il tourne seulement au survol
+.tool-card-orb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10rem;
+  height: 10rem;
+  margin: -5rem 0 0 -5rem;
+  border-radius: 50%;
+  background: var(--tool-gradient, linear-gradient(45deg, var(--tool-color), color-mix(in srgb, var(--tool-color) 40%, var(--bg-primary))));
+  animation: tool-card-spin 6s linear infinite paused;
+  will-change: transform;
+
+  // Copie floutée (une fois pour toutes) visible à travers le panneau
+  &--blurred {
+    filter: blur(18px);
+  }
+}
+
+// Couche 3 : zone du panneau, opaque pour cacher le disque net, ne montrant que la copie floutée.
+// Découpée exactement comme le panneau : marge à gauche/haut/bas, et à droite ce qui reste après 62 % de la zone intérieure.
+.tool-card-glass {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--bg-secondary);
+  clip-path: inset(
+    $tool-card-gutter
+    calc(#{100% - $tool-card-panel-width} + #{$tool-card-gutter * (2 * $tool-card-panel-width / 100% - 1)})
+    $tool-card-gutter
+    $tool-card-gutter
+    round $radius-5
+  );
+}
+
+@keyframes tool-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-card-orb {
+    animation: none;
+  }
+}
+
+// Couche 4 : texte du panneau à gauche ; logo net et bouton flèche à droite
+.tool-card-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $tool-card-gutter;
+}
+
+.tool-card-panel {
+  display: flex;
+  flex: 0 0 $tool-card-panel-width;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-2 $spacing-2;
+  border: 1px solid color-mix(in srgb, var(--bg-primary) 40%, transparent);
+  border-radius: $radius-5;
+  background-color: color-mix(in srgb, var(--bg-primary) 35%, transparent);
 }
 
 .tool-card-title {
   color: var(--text-primary);
-  font-size: $font-3;
+  font-size: $font-4;
   font-weight: $weight-7;
+  line-height: 1.2;
 }
 
 .tool-card-description {
   color: var(--text-secondary);
   font-size: $font-1;
+  line-height: 1.45;
+}
+
+.tool-card-action {
+  margin-top: auto;
+  color: var(--text-primary);
+  font-size: $font-1;
+  font-weight: $weight-6;
+  text-align: center;
+}
+
+.tool-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+// Logo net de l'outil, en haut de la colonne de droite
+.tool-card-logo {
+  display: grid;
+  place-items: center;
+  width: 3.75rem;
+  height: 3.75rem;
+  border-radius: 50%;
+  background-color: var(--bg-primary);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+
+  // Plus précis que `.tool-card .tool-icon` (articles.scss) pour prendre la couleur de l'outil
+  .tool-card & .tool-icon {
+    color: var(--tool-color);
+  }
+}
+
+.tool-card-arrow {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--bg-primary) 35%, transparent);
+  transition: background-color $duration-base ease;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
 }
 
 .add-tool-sync-message {

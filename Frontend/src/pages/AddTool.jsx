@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
 import VeilleLayout from '../Components/VeilleLayout'
 import ManualArticleModal from '../Components/ManualArticleModal'
 import ToolIcon from '../Components/ToolIcon'
+import ToolCard from '../Components/ToolCard'
 import { useWatch } from '../Context/useWatch'
 import { addManualArticle } from '../api/articles'
 import { createSourceAndSync } from '../api/sources'
@@ -36,29 +38,33 @@ export default function AddTool() {
 
       <div className="tool-card-grid">
         {TOOLS.map((tool) => (
-          <button
+          <ToolCard
             key={tool.type}
-            type="button"
-            className="tool-card"
+            icon={<ToolIcon type={tool.type} size={34} />}
+            title={tool.label}
+            description={tool.description}
+            action={tool.addLabel}
+            colors={tool.colors}
             onClick={() => setOpenTool(tool)}
             disabled={!currentWatch}
-          >
-            <ToolIcon type={tool.type} size={28} className="tool-card-icon" />
-            <span className="tool-card-title">{tool.label}</span>
-            <span className="tool-card-description">{tool.description}</span>
-          </button>
+          />
         ))}
 
-        <button type="button" className="tool-card" onClick={() => setManualOpen(true)} disabled={!currentWatch}>
-          <ToolIcon type="manual" size={28} className="tool-card-icon" />
-          <span className="tool-card-title">Ajout manuel</span>
-          <span className="tool-card-description">Ajoutez un article, une vidéo ou une page trouvés par vous-même.</span>
-        </button>
+        <ToolCard
+          icon={<ToolIcon type="manual" size={30} />}
+          title="Ajout manuel"
+          description="Un article, une vidéo ou une page trouvés par vous-même."
+          action="Ajouter un article"
+          onClick={() => setManualOpen(true)}
+          disabled={!currentWatch}
+        />
 
-        <div className="tool-card tool-card--soon" aria-disabled="true">
-          <span className="tool-card-title">D'autres outils arrivent</span>
-          <span className="tool-card-description">Réseaux sociaux, newsletters… à venir.</span>
-        </div>
+        <ToolCard
+          icon={<Sparkles size={28} className="tool-icon" />}
+          title="Bientôt"
+          description="Réseaux sociaux, newsletters… d’autres outils arrivent."
+          soon
+        />
       </div>
 
       {Modal && <Modal isOpen onClose={() => setOpenTool(null)} onCreate={handleCreate} />}

@@ -4,18 +4,16 @@ import VeilleLayout from '../Components/VeilleLayout'
 import DecisionModal from '../Components/DecisionModal'
 import StatusDonut from '../Components/charts/StatusDonut'
 import DailyColumns from '../Components/charts/DailyColumns'
-import SourceBars from '../Components/charts/SourceBars'
 import { useWatch } from '../Context/useWatch'
 import { getStats } from '../api/stats'
 import { getArticles, updateArticle } from '../api/articles'
 import { formatRelative } from '../utils/format'
 
-function Kpi({ label, value, hint, highlight = false }) {
+function Kpi({ label, value, highlight = false }) {
   return (
     <div className={`kpi ${highlight ? 'kpi--highlight' : ''}`}>
       <span className="kpi-value">{value}</span>
       <span className="kpi-label">{label}</span>
-      {hint && <span className="kpi-hint">{hint}</span>}
     </div>
   )
 }
@@ -88,15 +86,12 @@ export default function Home() {
   }
 
   const { by_status: byStatus } = stats
-  const decided = byStatus.validated + byStatus.trash
-  const relevance = decided ? `${Math.round((byStatus.validated / decided) * 100)} %` : '—'
 
   return (
     <VeilleLayout>
       <div className="dash">
         <div className="dash-kpis">
           <Kpi label="À traiter" value={byStatus.new} highlight />
-          <Kpi label="Taux de pertinence" value={relevance} hint="validés / triés" />
           <Kpi label="Collectés (7 j)" value={stats.collected_7d} />
           <Kpi label="Triés (7 j)" value={stats.processed_7d} />
           <Kpi label="Sources" value={stats.by_source.filter((source) => source.tool_type !== 'manual').length} />
@@ -110,11 +105,6 @@ export default function Home() {
         <section className="dash-card dash-card--days" aria-labelledby="dash-days-title">
           <h2 id="dash-days-title">Articles collectés · 14 derniers jours</h2>
           <DailyColumns data={stats.by_day} />
-        </section>
-
-        <section className="dash-card dash-card--sources" aria-labelledby="dash-sources-title">
-          <h2 id="dash-sources-title">Pertinence par source</h2>
-          <SourceBars sources={stats.by_source} />
         </section>
 
         <section className="dash-card dash-card--todo" aria-labelledby="dash-todo-title">

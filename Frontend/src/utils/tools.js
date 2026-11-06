@@ -3,12 +3,14 @@ import GoogleNewsModal from '../Components/GoogleNewsModal'
 import YouTubeModal from '../Components/YouTubeModal'
 import RedditModal from '../Components/RedditModal'
 
-// Outils à flux proposés dans « Ajouter un outil ». `type` = tool_type côté serveur (TOOL_TYPES dans routes.py)
+// Outils à flux proposés dans « Ajouter un outil ». `type` = tool_type côté serveur (TOOL_TYPES dans routes.py),
+// `colors` = couleurs du logo, la première est la couleur principale (cartes de « Ajouter un outil »)
 export const TOOLS = [
   {
     type: 'google_alerts',
     label: 'Google Alerts',
     slug: 'google-alerts',
+    colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'],
     description: 'Suivez un sujet grâce aux alertes de votre compte Google.',
     subtitle: 'Les articles de vos alertes Google.',
     feedsLabel: 'Alertes',
@@ -20,6 +22,7 @@ export const TOOLS = [
     type: 'google_news',
     label: 'Google News',
     slug: 'google-news',
+    colors: ['#0C9D58', '#4285F4', '#EA4335', '#FFC107'],
     description: 'Recherchez un sujet dans Google Actualités, sans compte Google.',
     subtitle: 'Les articles de vos recherches Google Actualités.',
     feedsLabel: 'Recherches',
@@ -31,6 +34,7 @@ export const TOOLS = [
     type: 'youtube',
     label: 'YouTube',
     slug: 'youtube',
+    colors: ['#FF0000', '#FF7A7A', '#B30000'],
     description: 'Recevez les nouvelles vidéos d’une chaîne ou d’une playlist.',
     subtitle: 'Les nouvelles vidéos des chaînes et playlists suivies.',
     feedsLabel: 'Chaînes',
@@ -42,6 +46,7 @@ export const TOOLS = [
     type: 'reddit',
     label: 'Reddit',
     slug: 'reddit',
+    colors: ['#FF4500', '#FF9566', '#C23500'],
     description: 'Suivez les posts les plus populaires d’un subreddit ou d’une recherche.',
     subtitle: 'Les posts Reddit de vos subreddits et recherches.',
     feedsLabel: 'Subreddits et recherches',
