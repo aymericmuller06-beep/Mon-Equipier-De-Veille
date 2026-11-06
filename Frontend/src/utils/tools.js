@@ -1,6 +1,7 @@
 import GoogleAlertModal from '../Components/GoogleAlertModal'
 import GoogleNewsModal from '../Components/GoogleNewsModal'
 import YouTubeModal from '../Components/YouTubeModal'
+import RedditModal from '../Components/RedditModal'
 
 // Outils à flux proposés dans « Ajouter un outil ». `type` = tool_type côté serveur (TOOL_TYPES dans routes.py)
 export const TOOLS = [
@@ -36,6 +37,17 @@ export const TOOLS = [
     addLabel: 'Ajouter une chaîne',
     emptyLabel: 'Aucune chaîne YouTube suivie pour le moment.',
     Modal: YouTubeModal,
+  },
+  {
+    type: 'reddit',
+    label: 'Reddit',
+    slug: 'reddit',
+    description: 'Suivez les posts les plus populaires d’un subreddit ou d’une recherche.',
+    subtitle: 'Les posts Reddit de vos subreddits et recherches.',
+    feedsLabel: 'Subreddits et recherches',
+    addLabel: 'Ajouter un subreddit',
+    emptyLabel: 'Aucun subreddit ni recherche Reddit suivi pour le moment.',
+    Modal: RedditModal,
   },
 ]
 

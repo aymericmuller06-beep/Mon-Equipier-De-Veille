@@ -433,6 +433,123 @@
 }
 
 // Un libellé qui suit un champ est séparé de lui
-.watch-modal-form :is(input, textarea, select, .tool-syntax, .tool-modal-warning, .tool-modal-row) + label {
+.watch-modal-form :is(input, textarea, select, .tool-syntax, .tool-modal-warning, .tool-modal-row, .keyword-chips, .tool-search-tips) + label {
   margin-top: $spacing-2;
+}
+
+// Mots-clés des filtres en badges (KeywordFilterFields)
+.watch-modal-form .keyword-chips {
+  --chip-color: var(--accent-color, #{$accent-color});
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: $spacing-1;
+
+  &--exclude {
+    --chip-color: #{$red-500};
+  }
+}
+
+.keyword-chip,
+.keyword-chip-form,
+.keyword-chip-add {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 1.75rem;
+  border-radius: $radius-full;
+  font-size: $font-1;
+}
+
+.keyword-chip {
+  padding: 2px 4px 2px $spacing-2;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--chip-color) 16%, var(--bg-secondary));
+  font-weight: $weight-6;
+}
+
+.keyword-chip-add {
+  padding: 2px $spacing-2;
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: $font-1;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--chip-color);
+    color: var(--text-primary);
+  }
+}
+
+.keyword-chip-form {
+  padding: 0 2px 0 0;
+  border: 1px solid var(--chip-color);
+  background-color: var(--bg-primary);
+
+  .watch-modal-form & input {
+    width: 12rem;
+    min-height: 0;
+    padding: 2px $spacing-2;
+    border: 0;
+    border-radius: $radius-full;
+    background: transparent;
+    font-size: $font-1;
+
+    &:focus {
+      outline: 0;
+    }
+  }
+
+  button {
+    color: var(--text-primary);
+    background-color: color-mix(in srgb, var(--chip-color) 22%, transparent);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--chip-color) 38%, transparent);
+    }
+  }
+}
+
+.keyword-chip button,
+.keyword-chip-form button {
+  display: flex;
+  padding: 3px;
+  border: 0;
+  border-radius: $radius-full;
+  cursor: pointer;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}
+
+.keyword-chip button {
+  color: var(--text-secondary);
+  background: transparent;
+
+  &:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+  }
+}
+
+.keyword-chip-add svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+// Astuces de recherche en phrases, une par ligne
+.tool-search-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 $spacing-1;
+  padding-left: $spacing-4;
+  color: var(--text-secondary);
+  font-size: $font-1;
 }
