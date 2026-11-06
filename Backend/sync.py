@@ -1,13 +1,18 @@
 import logging
 import re
 import threading
+import time
 import unicodedata
 from datetime import datetime, timezone
 
 from database import get_db
 from rss import fetch_rss_entries
+from web import RateLimitedError
 
 logger = logging.getLogger(__name__)
+
+# Reddit n'accepte qu'environ une requête par minute sans compte : on patiente avant de réessayer
+MAX_RATE_LIMIT_WAIT_SECONDS = 90
 
 
 def normalize(text):
@@ -70,7 +75,13 @@ def sync_all_sources():
     sources = get_db().execute("SELECT * FROM sources WHERE tool_type != 'manual'").fetchall()
     for source in sources:
         try:
-            sync_source(source)
+            try:
+                sync_source(source)
+            except RateLimitedError as e:
+                wait = min(e.retry_after, MAX_RATE_LIMIT_WAIT_SECONDS)
+                logger.info(f"… {e.host} limite les requêtes : nouvel essai de la source {source['id']} dans {wait} s")
+                time.sleep(wait)
+                sync_source(source)
         except Exception as e:
             logger.warning(f"✗ Synchronisation automatique de la source {source['id']} échouée: {e}")
 

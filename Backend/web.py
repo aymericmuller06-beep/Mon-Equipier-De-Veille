@@ -1,5 +1,6 @@
 import html
 import re
+import urllib.error
 import urllib.request
 from urllib.parse import parse_qs, urlparse
 
@@ -22,13 +23,37 @@ YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com"}
 YOUTUBE_FEED = "https://www.youtube.com/feeds/videos.xml"
 
 
+class RateLimitedError(Exception):
+    """Le site refuse temporairement nos requêtes (HTTP 429) ; `retry_after` en secondes"""
+
+    def __init__(self, host, retry_after):
+        super().__init__(f"{host} limite le nombre de requêtes (réessayer dans {retry_after} s)")
+        self.host = host
+        self.retry_after = retry_after
+
+
+def read_retry_after(error):
+    # Reddit envoie x-ratelimit-reset, les autres sites Retry-After
+    for header in ("Retry-After", "x-ratelimit-reset"):
+        try:
+            return max(1, int(float(error.headers.get(header))))
+        except (TypeError, ValueError):
+            continue
+    return 60
+
+
 def fetch(url, max_bytes, headers=None):
     """Télécharge une URL http(s) avec délai et taille maximale ; renvoie les octets lus"""
     if urlparse(url).scheme not in ("http", "https"):
         raise ValueError("Seules les URL http(s) sont acceptées")
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
-    with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
-        return response.read(max_bytes)
+    try:
+        with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
+            return response.read(max_bytes)
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            raise RateLimitedError(urlparse(url).netloc, read_retry_after(e)) from e
+        raise
 
 
 def fetch_html(url):

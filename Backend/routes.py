@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
 from sync import keyword_filter, sync_source as run_source_sync
-from web import fetch_page_title, resolve_youtube_feed
+from web import RateLimitedError, fetch_page_title, resolve_youtube_feed
 
 logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
@@ -51,7 +51,7 @@ def validate_status(status):
     return status in ARTICLE_STATUSES
 
 # Chaque outil ajouté dans la page "Ajouter un outil" doit déclarer son type ici
-TOOL_TYPES = {"rss", "google_alerts", "google_news", "youtube"}
+TOOL_TYPES = {"rss", "google_alerts", "google_news", "youtube", "reddit"}
 # Source créée automatiquement par veille pour accueillir les articles ajoutés à la main
 MANUAL_TOOL_TYPE = "manual"
 MANUAL_SOURCE_NAME = "Ajout manuel"
@@ -353,6 +353,9 @@ def sync_source(source_id):
 
     try:
         result = run_source_sync(source)
+    except RateLimitedError as e:
+        logger.warning(f"✗ Source {source_id} : {e}")
+        return jsonify({"error": f"{e.host} limite le nombre de requêtes : réessayez dans {e.retry_after} s (la synchronisation automatique s'en chargera sinon)."}), 429
     except Exception as e:
         logger.warning(f"✗ Erreur de lecture du flux RSS pour la source {source_id}: {str(e)}")
         return jsonify({"error": "Impossible de lire ce flux RSS. Vérifiez l'URL."}), 502
