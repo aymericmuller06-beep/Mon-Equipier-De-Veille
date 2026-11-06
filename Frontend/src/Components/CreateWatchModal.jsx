@@ -71,8 +71,8 @@ function CreateWatchModalContent({ onClose, onCreate }) {
             onChange={(event) => setDescription(event.target.value)}
           />
 
-          <span className="watch-modal-label">Couleur</span>
-          <div className="watch-modal-swatches" role="group" aria-label="Couleur de la veille">
+          <span className="watch-modal-label">Couleur de l’icône</span>
+          <div className="watch-modal-swatches" role="group" aria-label="Couleur de l’icône de la veille">
             {ACCENT_COLORS.map((color) => (
               <button
                 key={color}

@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import SideBar from './SideBar'
 import AccountMenu from './AccountMenu'
+import ArticleSearch from './ArticleSearch'
 import { useWatch } from '../Context/useWatch'
 
 // Ossature commune (sidebar + en-tête) à toutes les pages d'une veille
@@ -17,6 +18,7 @@ export default function VeilleLayout({ children }) {
       <SideBar />
       <div className="home">
         <header className="veille-header">
+          <ArticleSearch />
           <AccountMenu variant="inline" sansTexte={true} />
         </header>
         <div className="home-content">

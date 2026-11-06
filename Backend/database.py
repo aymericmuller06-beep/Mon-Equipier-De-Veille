@@ -2,6 +2,7 @@ import os
 import logging
 import sqlite3
 from flask import g
+from text import normalize
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ def get_db():
         db = g._database = sqlite3.connect(DATABASE)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys = ON;")
+        # normalize() en SQL : recherche sans tenir compte des majuscules ni des accents
+        db.create_function("normalize", 1, normalize, deterministic=True)
     return db
 
 def close_connection(exception):

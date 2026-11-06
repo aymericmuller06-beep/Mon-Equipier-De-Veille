@@ -1,97 +1,396 @@
-// Dashboard d'une veille : tient sur un écran d'ordinateur
+// Dashboard d'une veille : tient sur un écran d'ordinateur.
+// Identité commune avec les cartes de « Ajouter un outil » : vert en couleur principale, accents repris des logos
+// des outils (bleu, jaune, orange, rouge), bordures colorées au coin asymétrique, halos de couleur floutés.
+//
+// Contrastes : une couleur brute est trop claire sur blanc (jaune ≈ 1,6:1). Textes et graphiques n'utilisent que
+// des variantes assombries (clair) ou éclaircies (sombre) : texte ≥ 4,5:1, éléments graphiques ≥ 3:1.
+// Bordures et halos colorés sont décoratifs : aucune information ne repose sur eux.
 .dash {
+  --dash-surface: #fff;
+  --dash-radius: 1.25rem;
+  --dash-accent: #{$accent-color};
+  // Texte couleur de la veille sur une carte (≥ 6,2:1)
+  --dash-ink: color-mix(in srgb, var(--dash-accent) 55%, #000);
+  // Fond plein portant du texte blanc (≥ 5,4:1 sur toute la plage du dégradé)
+  --dash-solid: color-mix(in srgb, var(--dash-accent) 55%, #000);
+  --dash-solid-light: color-mix(in srgb, var(--dash-accent) 60%, #000);
+  // Barres et jauge (≥ 3,7:1), et la variante qui s'en distingue : pic, refusés (≥ 6,2:1)
+  --dash-fill: color-mix(in srgb, var(--dash-accent) 75%, #000);
+  --dash-emphasis: color-mix(in srgb, var(--dash-accent) 55%, #000);
+  // Refusés de la jauge : rouge des logos (≥ 3:1), distinct du vert des validés
+  --dash-danger: color-mix(in srgb, #ea4335 85%, #000);
+  // Gris des zones vides ou en attente (jours sans article, articles à traiter)
+  --dash-muted: color-mix(in srgb, var(--text-secondary) 30%, var(--dash-surface));
+  // Bordure des pleins foncés : invisible en clair, claire en sombre pour les détacher du fond
+  --dash-solid-border: transparent;
+  // Survol des boutons contour : inversés (noir en clair)
+  --dash-hover-bg: var(--text-primary);
+  --dash-hover-fg: var(--dash-surface);
+  --dash-hover-border: var(--text-primary);
+  // Survol des boutons pleins : teinte pâle + texte foncé en clair (gros écart de luminosité)
+  --dash-primary-hover-bg: var(--dash-accent-soft);
+  --dash-primary-hover-fg: var(--dash-ink);
+  --dash-accent-soft: color-mix(in srgb, var(--dash-accent) 14%, var(--dash-surface));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: $spacing-3;
 }
 
+// En sombre, on éclaircit au lieu d'assombrir (un accent foncé disparaît sur #292929)
+html.dark .dash {
+  --dash-surface: var(--bg-secondary);
+  --dash-ink: color-mix(in srgb, var(--dash-accent) 70%, #fff);           // ≥ 5,4:1
+  --dash-fill: color-mix(in srgb, var(--dash-accent) 80%, #fff);          // ≥ 4,5:1
+  --dash-emphasis: color-mix(in srgb, var(--dash-accent) 55%, #fff);      // ≥ 6,8:1, plus clair que les barres
+  --dash-danger: color-mix(in srgb, #ea4335 85%, #fff);
+  --dash-solid-border: color-mix(in srgb, var(--dash-accent) 70%, #fff);
+  // En sombre, pas de blanc (trop agressif) : teinte sombre de la veille, texte et bordure couleur de la veille
+  --dash-hover-bg: var(--dash-accent-soft);
+  --dash-hover-fg: var(--dash-ink);
+  --dash-hover-border: var(--dash-ink);
+  --dash-primary-hover-bg: var(--dash-hover-bg);
+  --dash-primary-hover-fg: var(--dash-ink);
+}
+
+// Couleurs d'accent reprises des logos des outils. Chaque élément `dash-tone--*` recalcule ses variantes lisibles
+$dash-tones: (
+  'green': $accent-color,
+  'blue': #4285f4,
+  'yellow': #fbbc05,
+  'orange': #ff4500,
+  'red': #ea4335,
+);
+
+@each $name, $color in $dash-tones {
+  .dash-tone--#{$name} {
+    --tone: #{$color};
+  }
+}
+
+.dash,
+[class*='dash-tone--'],
+.dash-tags li {
+  --tone-ink: color-mix(in srgb, var(--tone, var(--dash-accent)) 55%, #000);    // texte ≥ 4,5:1
+  --tone-fill: color-mix(in srgb, var(--tone, var(--dash-accent)) 65%, #000);   // barres ≥ 3:1
+  --tone-emphasis: color-mix(in srgb, var(--tone, var(--dash-accent)) 50%, #000);
+  --tone-halo: color-mix(in srgb, var(--tone, var(--dash-accent)) 22%, transparent);
+}
+
+html.dark {
+  .dash,
+  [class*='dash-tone--'],
+  .dash-tags li {
+    --tone-ink: color-mix(in srgb, var(--tone, var(--dash-accent)) 65%, #fff);
+    --tone-fill: color-mix(in srgb, var(--tone, var(--dash-accent)) 80%, #fff);
+    --tone-emphasis: color-mix(in srgb, var(--tone, var(--dash-accent)) 50%, #fff);
+    --tone-halo: color-mix(in srgb, var(--tone, var(--dash-accent)) 20%, transparent);
+  }
+}
+
+// Coin asymétrique des cartes outils (grand arrondi en haut à droite), en plus discret
+$dash-fun-radius: $radius-5 2.5rem $radius-5 $radius-5;
+
+// Halo de couleur flouté : un dégradé radial, sans filtre (gratuit à l'affichage).
+// Son coin varie d'un élément à l'autre (--halo-at) pour éviter l'effet répétitif.
+@mixin dash-halo($position) {
+  background:
+    radial-gradient(circle at var(--halo-at, #{$position}), var(--tone-halo), transparent 65%) no-repeat,
+    var(--dash-surface);
+}
+
+// Ombre colorée du survol, comme les cartes outils : on fait varier son opacité (pas de redessin de la box-shadow)
+@mixin dash-hover-glow {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--tone) 35%, transparent);
+    opacity: 0;
+    transition: opacity $duration-base ease;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
+}
+
+// En-tête : titre, sous-titre et actions principales
+.dash-header {
+  grid-area: header;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-3;
+
+  .home-content & h1 {
+    margin-bottom: 2px;
+    font-size: $font-7;
+    font-weight: $weight-5;
+    letter-spacing: -0.01em;
+  }
+
+  .home-content & p {
+    font-size: $font-2;
+  }
+}
+
+.dash-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+// Boutons pilule : contour par défaut, plein et foncé en --primary
+.dash-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: $spacing-1;
+  min-height: 2.75rem;
+  padding: 0 $spacing-4;
+  border: 1px solid var(--text-primary);
+  border-radius: $radius-full;
+  color: var(--text-primary);
+  background-color: transparent;
+  font: inherit;
+  font-size: $font-2;
+  font-weight: $weight-5;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color $duration-fast ease, border-color $duration-fast ease, color $duration-fast ease;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  // Survol bien visible : inversé en clair, teinte de la veille en sombre (voir --dash-hover-*)
+  &:hover,
+  &:focus-visible {
+    border-color: var(--dash-hover-border);
+    color: var(--dash-hover-fg);
+    background-color: var(--dash-hover-bg);
+  }
+
+  &--primary {
+    border-color: var(--dash-solid-border);
+    color: #fff;
+    background-color: var(--dash-solid);
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--dash-primary-hover-fg);
+      color: var(--dash-primary-hover-fg);
+      background-color: var(--dash-primary-hover-bg);
+    }
+  }
+
+  &--small {
+    min-height: 2rem;
+    padding: 0 $spacing-3;
+    font-size: $font-1;
+
+    svg {
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+  }
+}
+
+// Tuiles chiffrées
 .dash-kpis {
   grid-area: kpis;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: $spacing-3;
 }
 
 .kpi {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: $spacing-3;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-4;
-  background-color: var(--bg-secondary);
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-3 $spacing-3 $spacing-4;
+  border: 2px solid var(--tone);
+  border-radius: $dash-fun-radius;
+  color: var(--text-primary);
+  @include dash-halo(100% 100%);
+  text-decoration: none;
+  transition: transform $duration-base ease;
+  @include dash-hover-glow;
 
+  // Survol : la tuile se soulève avec son ombre colorée, la flèche se remplit de la couleur de la tuile
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-4px);
+    color: var(--text-primary);
+
+    .kpi-arrow {
+      border-color: var(--tone-ink);
+      color: var(--dash-surface);
+      background-color: var(--tone-ink);
+    }
+  }
+
+  // Tuile mise en avant : dégradé vert foncé (texte blanc ≥ 5,4:1), halo clair loin du texte
   &--highlight {
-    border-color: var(--accent-color, $accent-color);
-    background-color: color-mix(in srgb, var(--accent-color, $accent-color) 10%, var(--bg-secondary));
+    --text-primary: #fff;
+    border-color: var(--tone);
+    color: #fff;
+    background:
+      radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--tone) 45%, transparent), transparent 55%) no-repeat,
+      linear-gradient(150deg, var(--dash-solid-light), var(--dash-solid));
+
+    .kpi-label,
+    .kpi-hint {
+      color: #fff;
+    }
+
+    .kpi-arrow,
+    &:hover .kpi-arrow,
+    &:focus-visible .kpi-arrow {
+      border-color: #fff;
+      color: var(--dash-solid);
+      background-color: #fff;
+    }
+  }
+}
+
+// Alternance des coins du halo : tuiles (la 1re, mise en avant, a son propre dégradé)
+.dash-kpis > .kpi:nth-child(2) { --halo-at: 0% 0%; }
+.dash-kpis > .kpi:nth-child(3) { --halo-at: 100% 100%; }
+.dash-kpis > .kpi:nth-child(4) { --halo-at: 0% 100%; }
+
+.kpi-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.kpi-label {
+  color: var(--text-primary);
+  font-size: $font-3;
+  font-weight: $weight-7;
+}
+
+// Flèche ronde « en verre », comme celle des cartes outils
+.kpi-arrow {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 35%, transparent);
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+  transition: background-color $duration-fast ease, color $duration-fast ease;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
   }
 }
 
 .kpi-value {
+  // Explicite : sinon le style global des liens survolés la colore (vert illisible en sombre)
   color: var(--text-primary);
-  font-size: $font-7;
-  font-weight: $weight-7;
+  font-size: $font-9;
+  font-weight: $weight-5;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
-.kpi-label {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  color: var(--text-secondary);
-  font-size: $font-2;
-  font-weight: $weight-6;
+.kpi-hint {
+  color: var(--tone-ink);
+  font-size: $font-1;
 }
 
+// Cartes
 .dash-card {
+  // Positionnée : peinte après les tuiles (ordre du DOM), elle passe devant leur ombre colorée au survol
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: $spacing-3;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-5;
-  background-color: var(--bg-secondary);
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+  border-radius: $dash-fun-radius;
+  @include dash-halo(100% 0%);
 
+  // Titre gras précédé d'une pastille de la couleur de la carte
   h2 {
-    margin-bottom: $spacing-2;
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    margin-bottom: $spacing-3;
     color: var(--text-primary);
-    font-size: $font-3;
+    font-size: $font-4;
+    font-weight: $weight-7;
+
+    &::before {
+      content: '';
+      flex: 0 0 auto;
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 50%;
+      background-color: var(--tone-fill);
+    }
   }
 
   > :not(h2):not(.dash-card-head) {
     min-height: 0;
   }
 
-  &--donut { grid-area: donut; }
-  &--days { grid-area: days; }
-  &--todo { grid-area: todo; }
-  &--side { grid-area: side; }
+  // Chaque carte a sa zone et le coin de son halo (alterné d'une carte à sa voisine)
+  &--days { grid-area: days; --halo-at: 0% 100%; }
+  &--gauge { grid-area: gauge; --halo-at: 100% 0%; }
+  &--todo { grid-area: todo; --halo-at: 100% 100%; }
+  &--side { grid-area: side; --halo-at: 0% 0%; }
 
   &--todo .dash-todo,
   &--side {
     overflow-y: auto;
   }
 
-  &--days .columns-chart {
+  &--days .pill-chart,
+  &--gauge .gauge {
     flex: 1;
   }
 }
 
 .home-content .dash-card h2.dash-card-subtitle {
-  margin-top: $spacing-3;
+  margin-top: $spacing-4;
 }
 
 .dash-card-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: $spacing-2;
+  margin-bottom: $spacing-3;
 
-  a {
-    font-size: $font-2;
-    font-weight: $weight-6;
+  h2 {
+    margin-bottom: 0;
   }
+}
+
+// Logo de l'outil dans une pastille ronde, comme un avatar
+.dash-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  // Pastille du logo, comme sur les cartes outils : fond clair et ombre douce
+  background-color: var(--bg-primary);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 14%);
 }
 
 .dash-todo {
@@ -99,43 +398,62 @@
   // Colonne bornée à la carte : un titre long est tronqué au lieu de pousser les boutons dehors
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  gap: $spacing-1;
+  gap: 2px;
 
   li {
     display: flex;
     align-items: center;
     gap: $spacing-2;
     padding: $spacing-2;
-    border-radius: $radius-4;
+    border-radius: $radius-5;
 
+    // Ligne survolée : teinte de la veille, bien distincte du fond de la carte
     &:hover {
-      background-color: var(--bg-tertiary);
+      background-color: var(--dash-accent-soft);
     }
   }
 }
 
-.dash-todo-text {
+.dash-todo-text,
+.dash-validated li > div {
   display: flex;
   flex: 1;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
 
   a {
     overflow: hidden;
     color: var(--text-primary);
     font-size: $font-2;
-    font-weight: $weight-6;
+    font-weight: $weight-5;
+    text-decoration: none;
     text-overflow: ellipsis;
     white-space: nowrap;
 
     &:hover {
-      color: var(--accent-color, $accent-color);
+      color: var(--dash-ink);
     }
   }
 
   span {
+    overflow: hidden;
     color: var(--text-secondary);
     font-size: $font-1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.dash-validated {
+  display: grid;
+  gap: $spacing-3;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    min-width: 0;
   }
 }
 
@@ -148,51 +466,29 @@
     display: flex;
     align-items: center;
     gap: $spacing-1;
-    padding: 2px 4px 2px $spacing-2;
+    padding: 4px 4px 4px $spacing-3;
+    border: 1px solid var(--tone-ink);
     border-radius: $radius-full;
     color: var(--text-primary);
-    background-color: color-mix(in srgb, var(--accent-color, $accent-color) 16%, var(--bg-secondary));
     font-size: $font-1;
-    font-weight: $weight-6;
+    font-weight: $weight-5;
 
     span {
-      min-width: 1.25rem;
-      padding: 0 4px;
+      min-width: 1.4rem;
+      padding: 1px 6px;
       border-radius: $radius-full;
-      background-color: var(--bg-primary);
+      color: var(--dash-surface);
+      background-color: var(--tone-ink);
       text-align: center;
     }
   }
 }
 
-.dash-validated {
-  display: grid;
-  gap: $spacing-2;
-
-  li {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    padding-left: $spacing-2;
-    border-left: 3px solid var(--viz-validated);
-  }
-
-  a {
-    overflow: hidden;
-    color: var(--text-primary);
-    font-size: $font-2;
-    font-weight: $weight-6;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  span {
-    overflow: hidden;
-    color: var(--text-secondary);
-    font-size: $font-1;
-    font-style: italic;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+// Tags multicolores : la palette des outils tourne d'un tag à l'autre
+$dash-tag-tones: 'green', 'blue', 'yellow', 'orange', 'red';
+@each $name in $dash-tag-tones {
+  .dash-tags li:nth-child(#{length($dash-tag-tones)}n + #{index($dash-tag-tones, $name)}) {
+    --tone: #{map-get($dash-tones, $name)};
   }
 }
 
@@ -225,10 +521,11 @@
   .dash {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-areas:
+      'header header'
       'kpis kpis'
-      'donut days'
-      'todo todo'
-      'side side';
+      'days days'
+      'gauge side'
+      'todo todo';
   }
 }
 
@@ -241,7 +538,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding-top: $spacing-3;
+    padding-top: $spacing-4;
     padding-bottom: $spacing-3;
     overflow: hidden;
   }
@@ -249,11 +546,12 @@
   .dash {
     flex: 1;
     min-height: 0;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
+      'header header header'
       'kpis kpis kpis'
-      'donut days days'
+      'days days gauge'
       'todo todo side';
   }
 

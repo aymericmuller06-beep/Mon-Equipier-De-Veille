@@ -1,7 +1,9 @@
 import { apiFetch } from './client'
 
-export function getArticles({ themeId, status, sourceId, toolType, limit, sort } = {}) {
+// q : recherche dans le titre et la note (sans majuscules ni accents)
+export function getArticles({ themeId, status, sourceId, toolType, limit, sort, q } = {}) {
   const params = new URLSearchParams()
+  if (q) params.set('q', q)
   if (sourceId) params.set('source_id', sourceId)
   if (themeId) params.set('theme_id', themeId)
   if (status) params.set('status', status)

@@ -10,7 +10,7 @@
 // Barre commune à toutes les veilles : accueillera plus tard un espace de recherche à gauche
 .veille-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   flex: 0 0 auto;
   gap: $spacing-3;

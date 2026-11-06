@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
 from sync import keyword_filter, sync_source as run_source_sync
+from text import normalize
 from web import RateLimitedError, fetch_page_title, resolve_youtube_feed
 
 logger = logging.getLogger(__name__)
@@ -385,6 +386,15 @@ def get_articles():
     }
     conditions = [f"{column} = ?" for column, value in filters.items() if value]
     params = [value for value in filters.values() if value]
+
+    # q : recherche dans le titre et la note (sans majuscules ni accents)
+    search = normalize((request.args.get("q") or "").strip())[:100]
+    if search:
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        conditions.append(
+            "normalize(articles.title || ' ' || COALESCE(articles.status_reason, '')) LIKE ? ESCAPE '\\'"
+        )
+        params.append(f"%{escaped}%")
 
     query = ARTICLE_SELECT
     if conditions:

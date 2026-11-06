@@ -19,8 +19,8 @@ export const ThemeToggle = () => {
   return (
     <div className="theme-toggle">
       {/* Accent Color Selector */}
-      <div className="theme-toggle__accent" role="group" aria-label="Couleur d’accent de cette veille">
-        <span className="theme-toggle__label">Couleur de cette veille</span>
+      <div className="theme-toggle__accent" role="group" aria-label="Couleur de l’icône de cette veille">
+        <span className="theme-toggle__label">Couleur de l’icône de cette veille</span>
         <div className="theme-toggle__swatches">
           {accentColors.map((color) => (
             <button

@@ -2,23 +2,17 @@ import logging
 import re
 import threading
 import time
-import unicodedata
 from datetime import datetime, timezone
 
 from database import get_db
 from rss import fetch_rss_entries
 from web import RateLimitedError
+from text import normalize
 
 logger = logging.getLogger(__name__)
 
 # Reddit n'accepte qu'environ une requête par minute sans compte : on patiente avant de réessayer
 MAX_RATE_LIMIT_WAIT_SECONDS = 90
-
-
-def normalize(text):
-    """Minuscules sans accents, pour comparer « Sécurité » et « securite »"""
-    decomposed = unicodedata.normalize("NFD", text.lower())
-    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
 
 
 def parse_keywords(value):

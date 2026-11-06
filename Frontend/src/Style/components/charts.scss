@@ -1,176 +1,178 @@
-// Graphiques du dashboard (SVG faits main)
-.viz-fill--new { background-color: var(--viz-new); }
-.viz-fill--validated { background-color: var(--viz-validated); }
-.viz-fill--trash { background-color: var(--viz-trash); }
-.viz-stroke--new { stroke: var(--viz-new); }
-.viz-stroke--validated { stroke: var(--viz-validated); }
-.viz-stroke--trash { stroke: var(--viz-trash); }
+// Graphiques du dashboard (faits main, sans bibliothèque) — mêmes variables que .dash (dashboard.scss)
 
-.viz-grid {
-  stroke: var(--viz-grid);
-  stroke-width: 1;
-}
-
-.viz-axis {
-  fill: var(--text-secondary);
-  font-size: 10px;
-}
-
+// Plus précis que `.home-content p` (taille des paragraphes de page)
+.home-content .viz-empty,
 .viz-empty {
   color: var(--text-secondary);
   font-size: $font-2;
 }
 
-.viz-legend {
-  display: grid;
-  gap: $spacing-1;
-
-  li {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    font-size: $font-2;
-  }
-}
-
-.viz-legend--inline {
+// ---------- Histogramme en pilules (DailyColumns) ----------
+.pill-chart {
   display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-1 $spacing-3;
-  padding-top: $spacing-2;
-
-  li {
-    font-size: $font-1;
-  }
+  align-items: stretch;
+  gap: clamp(4px, 1vw, $spacing-2);
+  min-height: 8rem;
 }
 
-.viz-swatch {
-  flex: 0 0 auto;
-  width: 0.65rem;
-  height: 0.65rem;
-  border-radius: 3px;
-}
-
-.viz-legend-label {
-  color: var(--text-primary);
-}
-
-.viz-legend-value {
-  margin-left: auto;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-// Anneau
-.donut {
+.pill-chart-col {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: $spacing-3;
-  height: 100%;
-
-  .viz-legend {
-    flex: 1 1 9rem;
-  }
-}
-
-.donut-figure {
-  position: relative;
-  flex: 0 0 auto;
-  width: clamp(7rem, 22vh, 10rem);
-  aspect-ratio: 1;
-
-  svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-}
-
-.donut-track {
-  fill: none;
-  stroke: var(--viz-grid);
-}
-
-.donut-segment {
-  fill: none;
-  cursor: pointer;
-  transition: opacity $duration-fast ease;
-
-  &.is-dimmed {
-    opacity: 0.35;
-  }
-}
-
-.donut-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
+  flex: 1;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  gap: $spacing-1;
+  min-width: 0;
+  outline: 0;
+}
+
+.pill-chart-track {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  // La bulle de valeur dépasse au-dessus de la barre la plus haute
+  padding-top: 1.75rem;
+}
+
+.pill-chart-bar {
+  position: relative;
+  width: 100%;
+  max-width: 3rem;
+  border-radius: $radius-full;
+  background-color: var(--tone-fill);
+  transition: background-color $duration-fast ease;
+
+  &.is-peak {
+    background-color: var(--tone-emphasis);
+  }
+
+  // Jour sans article : pilule grise
+  &.is-empty {
+    background-color: var(--dash-muted);
+  }
+}
+
+// Bulle de valeur : visible au survol ou au clavier
+.pill-chart-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: 1px 8px;
+  border: 1px solid var(--tone-ink);
+  border-radius: $radius-full;
+  color: var(--text-primary);
+  background-color: var(--dash-surface);
+  font-size: $font-1;
+  font-weight: $weight-5;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity $duration-fast ease, transform $duration-fast ease;
   pointer-events: none;
 }
 
-.donut-center-value {
-  color: var(--text-primary);
-  font-size: $font-7;
-  font-weight: $weight-7;
-  line-height: 1;
+.pill-chart-col:is(:hover, :focus-visible) {
+  .pill-chart-bar:not(.is-empty) {
+    background-color: var(--tone-emphasis);
+  }
+
+  .pill-chart-tip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
-.donut-center-label {
+.pill-chart-label {
   color: var(--text-secondary);
   font-size: $font-1;
+
+  .is-today & {
+    color: var(--text-primary);
+    font-weight: $weight-7;
+  }
 }
 
-// Colonnes par jour
-.columns-chart {
+// ---------- Jauge en demi-cercle (SortGauge) ----------
+.gauge {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.gauge-figure {
   position: relative;
-  height: 100%;
-  min-height: 8rem;
+  width: 100%;
+  max-width: 17rem;
+  margin: 0 auto;
 
   svg {
     display: block;
     width: 100%;
-    height: 100%;
     overflow: visible;
   }
 }
 
-.viz-column {
-  fill: var(--accent-color, $accent-color);
-  transition: opacity $duration-fast ease;
+.gauge-arc {
+  fill: none;
+  stroke-linecap: round;
 
-  &.is-dimmed {
-    opacity: 0.4;
-  }
+  &--new { stroke: var(--dash-muted); }
+  &--validated { stroke: var(--tone-fill); }
+  &--trash { stroke: var(--dash-danger); }
 }
 
-.viz-hit {
-  fill: transparent;
-  outline: none;
-  cursor: default;
-}
-
-.viz-tooltip {
+.gauge-center {
   position: absolute;
-  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  padding: $spacing-1 $spacing-2;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-3;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  box-shadow: $shadow-3;
-  font-size: $font-1;
-  white-space: nowrap;
-  transform: translate(-50%, -100%);
-  pointer-events: none;
+  align-items: center;
+}
 
-  span {
+.gauge-value {
+  color: var(--text-primary);
+  font-size: $font-8;
+  font-weight: $weight-5;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-label {
+  color: var(--text-secondary);
+  font-size: $font-1;
+}
+
+.gauge-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-1 $spacing-3;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     color: var(--text-secondary);
+    font-size: $font-1;
   }
+
+  strong {
+    color: var(--text-primary);
+    font-weight: $weight-5;
+  }
+}
+
+.gauge-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+
+  &--validated { background-color: var(--tone-fill); }
+  &--trash { background-color: var(--dash-danger); }
+
+  &--new { background-color: var(--dash-muted); }
 }

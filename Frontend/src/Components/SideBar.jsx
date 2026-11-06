@@ -4,6 +4,7 @@ import { Home, LayoutGrid, Settings2, LayoutDashboard, Inbox, CheckCircle2, Tras
 import ToolIcon from './ToolIcon'
 import { ThemeToggle } from './ThemeToggle'
 import { useWatch } from '../Context/useWatch'
+import { useTheme } from '../Context/useTheme'
 import { getSources } from '../api/sources'
 import { TOOLS, toolPath } from '../utils/tools'
 
@@ -14,6 +15,7 @@ export default function SideBar() {
   const [activePanel, setActivePanel] = useState('menu')
   const { watchTitle, currentWatch } = useWatch()
   const { pathname } = useLocation()
+  const { watchColor } = useTheme()
   const [toolTypesByWatch, setToolTypesByWatch] = useState(() => Object.fromEntries(toolTypesCache))
   const usedTypes = currentWatch ? toolTypesByWatch[currentWatch.id] ?? [] : []
   const usedTools = TOOLS.filter((tool) => usedTypes.includes(tool.type))
@@ -41,7 +43,7 @@ export default function SideBar() {
       {/* Header */}
       <div className="sidebar-header">
         <div className="sidebar-watch-heading">
-          <Link className="sidebar-home-button" to="/" aria-label="Retour à l’accueil et aux veilles créées" title="Changer de veille">
+          <Link className="sidebar-home-button" style={{ '--watch-color': watchColor }} to="/" aria-label="Retour à l’accueil et aux veilles créées" title="Changer de veille">
             <Home aria-hidden="true" />
           </Link>
           <div className="sidebar-watch-copy">

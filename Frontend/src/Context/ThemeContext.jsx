@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useWatch } from './useWatch';
 import { ThemeContext } from './useTheme';
 
@@ -15,7 +14,6 @@ const accentPalette = {
 
 export const ThemeProvider = ({ children }) => {
   const { currentWatch, setWatchAccent } = useWatch();
-  const { pathname } = useLocation();
 
   // Mode light/dark
   const [isDark, setIsDark] = useState(() => {
@@ -25,10 +23,9 @@ export const ThemeProvider = ({ children }) => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Le hub reste vert. L'accent propre à une veille ne s'applique que dans son espace.
-  const accentColor = pathname.startsWith('/veille') && currentWatch
-    ? currentWatch.accent_color || 'green'
-    : 'green';
+  // Le site reste toujours vert : la couleur choisie pour une veille ne colore que son icône
+  const accentColor = currentWatch?.accent_color || 'green';
+  const watchColor = (accentPalette[accentColor] ?? accentPalette.green).color;
   const accentColors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
 
   // Appliquer le mode dark au body
@@ -43,16 +40,6 @@ export const ThemeProvider = ({ children }) => {
     }
     localStorage.setItem('theme-mode', isDark ? 'dark' : 'light');
   }, [isDark]);
-
-  // Appliquer la couleur d'accent
-  useEffect(() => {
-    if (typeof document === 'undefined') return; // SSR guard
-    
-    const accent = accentPalette[accentColor] ?? accentPalette.green;
-    document.documentElement.style.setProperty('--accent-color', accent.color);
-    document.documentElement.style.setProperty('--accent-light', accent.light);
-    document.documentElement.style.setProperty('--accent-dark', accent.dark);
-  }, [accentColor]);
 
   const toggleDarkMode = () => {
     setIsDark(!isDark);
@@ -70,6 +57,7 @@ export const ThemeProvider = ({ children }) => {
       isDark,
       toggleDarkMode,
       accentColor,
+      watchColor,
       changeAccentColor,
       accentColors,
     }}>

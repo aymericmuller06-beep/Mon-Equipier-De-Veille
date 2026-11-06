@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react'
 
 // Carte d'un outil (page « Ajouter un outil ») : disque aux couleurs du logo en fond, flouté par un panneau de verre
 // qui porte le titre, une mini description et l'action ; le logo net et la flèche sont dans la colonne de droite. `colors` = couleurs du logo (la première est la principale) ;
-// sans couleurs, la carte prend la couleur de la veille.
+// sans couleurs, la carte prend la couleur du site (vert).
 export default function ToolCard({ icon, title, description, action, colors, onClick, disabled = false, soon = false }) {
   const Tag = soon ? 'div' : 'button'
   const colorStyle = colors?.length
