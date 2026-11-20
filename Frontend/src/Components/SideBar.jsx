@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, LayoutGrid, Settings2, LayoutDashboard, Inbox, CheckCircle2, Trash2, PlusCircle } from 'lucide-react'
+import { Home, LayoutGrid, Settings2, LayoutDashboard, Inbox, CheckCircle2, Trash2, PlusCircle, Tags } from 'lucide-react'
 import ToolIcon from './ToolIcon'
 import { ThemeToggle } from './ThemeToggle'
 import { useWatch } from '../Context/useWatch'
@@ -13,7 +13,9 @@ const toolTypesCache = new Map()
 
 export default function SideBar() {
   const [activePanel, setActivePanel] = useState('menu')
-  const { watchTitle, currentWatch } = useWatch()
+  const { watchTitle, currentWatch, watchId } = useWatch()
+  // Veille mémorisée mais pas encore chargée (serveur lent ou injoignable) : on ne dit pas « aucune veille »
+  const sidebarTitle = watchTitle || (watchId ? 'Connexion au serveur…' : 'Aucune veille sélectionnée')
   const { pathname } = useLocation()
   const { watchColor } = useTheme()
   const [toolTypesByWatch, setToolTypesByWatch] = useState(() => Object.fromEntries(toolTypesCache))
@@ -48,7 +50,7 @@ export default function SideBar() {
           </Link>
           <div className="sidebar-watch-copy">
             <span className="sidebar-watch-caption">Veille actuelle</span>
-            <h2 className="sidebar-watch-title" title={watchTitle || 'Aucune veille sélectionnée'}>{watchTitle || 'Aucune veille sélectionnée'}</h2>
+            <h2 className="sidebar-watch-title" title={sidebarTitle}>{sidebarTitle}</h2>
           </div>
         </div>
         <div className={`sidebar-header-switcher ${activePanel === 'settings' ? 'is-settings' : ''}`} role="group" aria-label="Contenu de la barre latérale">
@@ -95,6 +97,12 @@ export default function SideBar() {
               <Link className={linkClass('/veille/corbeille')} to="/veille/corbeille" aria-current={pathname === '/veille/corbeille' ? 'page' : undefined}>
                 <Trash2 aria-hidden="true" />
                 <span>Corbeille</span>
+              </Link>
+            </li>
+            <li>
+              <Link className={linkClass('/veille/tags')} to="/veille/tags" aria-current={pathname === '/veille/tags' ? 'page' : undefined}>
+                <Tags aria-hidden="true" />
+                <span>Tags</span>
               </Link>
             </li>
           </ul>

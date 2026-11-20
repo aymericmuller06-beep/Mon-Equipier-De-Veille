@@ -15,12 +15,15 @@ function ConfirmModalContent({
   const [error, setError] = useState('')
   const [typedPhrase, setTypedPhrase] = useState('')
 
+  // Écouté en premier (phase de capture) : Échap ferme cette confirmation sans fermer la fenêtre ouverte en dessous
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      onClose()
     }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => document.removeEventListener('keydown', handleKeyDown, true)
   }, [onClose])
 
 

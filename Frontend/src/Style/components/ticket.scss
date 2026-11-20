@@ -346,3 +346,41 @@
     }
   }
 }
+
+// Ticket grisé affiché pendant le chargement (TicketSkeletons)
+.ticket--skeleton {
+  &::before {
+    background-color: var(--border-color);
+  }
+
+  .ticket-main {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+}
+
+.skeleton-line {
+  display: block;
+  height: 0.75rem;
+  border-radius: $radius-2;
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border-color) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+
+  &--meta { width: 40%; }
+  &--title { width: 75%; height: 1rem; }
+  &--tags { width: 25%; }
+  &--button { width: 6rem; height: 2rem; }
+}
+
+@keyframes skeleton-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
+}

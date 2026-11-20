@@ -5,6 +5,7 @@ import VeilleLayout from '../Components/VeilleLayout'
 import ArticleBoard from '../Components/ArticleBoard'
 import ToolIcon from '../Components/ToolIcon'
 import SourceSettingsModal from '../Components/SourceSettingsModal'
+import TicketSkeletons from '../Components/TicketSkeletons'
 import { useWatch } from '../Context/useWatch'
 import { createSourceAndSync, getSources, syncSource, updateSource } from '../api/sources'
 import { formatSyncResult, sourceHealth } from '../utils/tools'
@@ -97,7 +98,7 @@ export default function ToolPage({ tool }) {
       {error && <p className="watch-selection-error">{error}</p>}
 
       {loading ? (
-        <p className="dashboard-status">Chargement…</p>
+        <TicketSkeletons />
       ) : sources.length > 0 ? (
         <>
           <div className="alerts-bar">

@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+import { Plus, Tags, X } from 'lucide-react'
 import ArticleTicket from './ArticleTicket'
 import ConfirmModal from './ConfirmModal'
 import DecisionModal from './DecisionModal'
 import ManualArticleModal from './ManualArticleModal'
+import TagManagerModal from './TagManagerModal'
+import TicketSkeletons from './TicketSkeletons'
 import { useWatch } from '../Context/useWatch'
 import { addManualArticle, addTagToArticle, emptyTrash, getArticles, removeTagFromArticle, updateArticle } from '../api/articles'
 import { createTag, getTags } from '../api/tags'
+import { normalizeText } from '../utils/format'
 
 const TAB_LABELS = { new: 'À traiter', validated: 'Validés', trash: 'Corbeille', all: 'Tous' }
 
@@ -19,32 +23,85 @@ const EMPTY_MESSAGES = {
 
 const TOAST_LABELS = { new: 'remis à traiter', validated: 'validé', trash: 'envoyé à la corbeille' }
 
+// Période, d'après la date de publication (ou de collecte si le flux n'en donne pas), comme sur les tickets
+const PERIODS = [
+  { value: '', label: 'Toutes les dates' },
+  { value: 'today', label: 'Aujourd’hui' },
+  { value: '7d', label: '7 derniers jours', days: 7 },
+  { value: '30d', label: '30 derniers jours', days: 30 },
+]
+
+function periodStart(period) {
+  if (!period) return null
+  if (period === 'today') {
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    return start.getTime()
+  }
+  return Date.now() - PERIODS.find((item) => item.value === period).days * 86400000
+}
+
 function matchesSearch(article, query) {
   if (!query) return true
   const haystack = [article.title, article.source_name, article.status_reason, ...article.tags.map((t) => t.name)]
     .filter(Boolean)
     .join(' ')
-    .toLowerCase()
-  return haystack.includes(query)
+  return normalizeText(haystack).includes(query)
+}
+
+// Filtres gardés pendant la session (onglet ouvert), séparément pour chaque page et chaque veille
+const DEFAULT_FILTERS = { status: null, search: '', tag: '', source: '', period: '', sort: 'recent' }
+
+function readFilters(key) {
+  try {
+    return JSON.parse(sessionStorage.getItem(key)) || {}
+  } catch {
+    return {}
+  }
+}
+
+function saveFilters(key, filters) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(filters))
+  } catch {
+    // Stockage indisponible (navigation privée…) : les filtres ne seront simplement pas gardés
+  }
 }
 
 // Liste d'articles sous forme de tickets, avec filtres et annulation de la dernière action.
 // `statuses` : onglets affichés (un seul = page à statut fixe). `toolType` : limite à un outil.
 // `canAddManual` : affiche le bouton d'ajout manuel (l'article est ajouté avec le premier statut des onglets).
-export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAddManual = false }) {
-  const { currentWatch } = useWatch()
+// Arriver avec `state.tagId` (lien depuis la gestion des tags) affiche directement les articles de ce tag.
+export default function ArticleBoard(props) {
+  const location = useLocation()
+  const tagId = location.state?.tagId
+  // Recréée à chaque lien vers un tag, pour appliquer ce filtre même si la page était déjà ouverte
+  return <Board key={tagId ? location.key : 'board'} {...props} linkedTagId={tagId} storageKey={location.pathname} />
+}
+
+function Board({ statuses, toolType, refreshKey = 0, canAddManual = false, linkedTagId, storageKey }) {
+  const { currentWatch, watchId } = useWatch()
+  const filtersKey = `filtres:${watchId}:${storageKey}`
+  const [initialFilters] = useState(() => {
+    if (linkedTagId) return { ...DEFAULT_FILTERS, tag: String(linkedTagId) }
+    const saved = { ...DEFAULT_FILTERS, ...readFilters(filtersKey) }
+    return statuses.includes(saved.status) ? saved : { ...saved, status: statuses[0] }
+  })
   const [articles, setArticles] = useState([])
   const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [activeStatus, setActiveStatus] = useState(statuses[0])
-  const [search, setSearch] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
-  const [sourceFilter, setSourceFilter] = useState('')
-  const [sort, setSort] = useState('recent')
+  const [reloadKey, setReloadKey] = useState(0)
+  const [activeStatus, setActiveStatus] = useState(initialFilters.status || statuses[0])
+  const [search, setSearch] = useState(initialFilters.search)
+  const [tagFilter, setTagFilter] = useState(initialFilters.tag)
+  const [sourceFilter, setSourceFilter] = useState(initialFilters.source)
+  const [period, setPeriod] = useState(initialFilters.period)
+  const [sort, setSort] = useState(initialFilters.sort)
   const [toast, setToast] = useState(null)
   const [isEmptyTrashOpen, setEmptyTrashOpen] = useState(false)
   const [isManualOpen, setManualOpen] = useState(false)
+  const [isTagManagerOpen, setTagManagerOpen] = useState(false)
   // Article en cours de décision : { article, decision: 'validated' | 'trash' | 'note' }
   const [pending, setPending] = useState(null)
 
@@ -62,7 +119,11 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [currentWatch, toolType, refreshKey])
+  }, [currentWatch, toolType, refreshKey, reloadKey])
+
+  useEffect(() => {
+    saveFilters(filtersKey, { status: activeStatus, search, tag: tagFilter, source: sourceFilter, period, sort })
+  }, [filtersKey, activeStatus, search, tagFilter, sourceFilter, period, sort])
 
   useEffect(() => {
     if (!toast) return
@@ -157,20 +218,33 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
     return [...byId.entries()].sort((a, b) => a[1].localeCompare(b[1]))
   }, [articles])
 
+  // Un filtre gardé en mémoire qui ne correspond plus à rien (tag supprimé, source retirée) est ignoré
+  const activeTag = usedTags.some(([id]) => String(id) === tagFilter) ? tagFilter : ''
+  const activeSource = sources.some(([id]) => String(id) === sourceFilter) ? sourceFilter : ''
+
   const visible = useMemo(() => {
-    const query = search.trim().toLowerCase()
+    const query = normalizeText(search.trim())
+    const since = periodStart(period)
     const list = articles.filter((article) => (
       (activeStatus === 'all' || article.status === activeStatus)
-      && (!tagFilter || article.tags.some((t) => String(t.id) === tagFilter))
-      && (!sourceFilter || String(article.source_id) === sourceFilter)
+      && (!activeTag || article.tags.some((t) => String(t.id) === activeTag))
+      && (!activeSource || String(article.source_id) === activeSource)
+      && (since === null || new Date(article.published_at || article.created_at).getTime() >= since)
       && matchesSearch(article, query)
     ))
     return sort === 'oldest' ? [...list].reverse() : list
-  }, [articles, activeStatus, tagFilter, sourceFilter, search, sort])
+  }, [articles, activeStatus, activeTag, activeSource, period, search, sort])
 
-  const hasFilters = Boolean(search || tagFilter || sourceFilter)
+  const hasFilters = Boolean(search || activeTag || activeSource || period)
 
-  if (loading) return <p className="dashboard-status">Chargement des articles…</p>
+  const clearFilters = () => {
+    setSearch('')
+    setTagFilter('')
+    setSourceFilter('')
+    setPeriod('')
+  }
+
+  if (loading) return <TicketSkeletons />
   if (error && articles.length === 0) {
     return <p className="dashboard-status dashboard-status--error">Impossible de contacter le serveur : {error}</p>
   }
@@ -205,21 +279,34 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
             aria-label="Rechercher dans les articles"
           />
         </label>
-        <select value={tagFilter} onChange={(event) => setTagFilter(event.target.value)} aria-label="Filtrer par tag">
-          <option value="">Tous les tags</option>
-          {usedTags.map(([id, name]) => <option key={id} value={String(id)}>#{name}</option>)}
-        </select>
+        <div className="board-tag-filter">
+          <select value={activeTag} onChange={(event) => setTagFilter(event.target.value)} aria-label="Filtrer par tag">
+            <option value="">Tous les tags</option>
+            {usedTags.map(([id, name]) => <option key={id} value={String(id)}>#{name}</option>)}
+          </select>
+          <button type="button" className="board-icon-button" onClick={() => setTagManagerOpen(true)} title="Gérer les tags" aria-label="Gérer les tags">
+            <Tags aria-hidden="true" />
+          </button>
+        </div>
         {sources.length > 1 && (
-          <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} aria-label="Filtrer par source">
+          <select value={activeSource} onChange={(event) => setSourceFilter(event.target.value)} aria-label="Filtrer par source">
             <option value="">Toutes les sources</option>
             {sources.map(([id, name]) => <option key={id} value={String(id)}>{name}</option>)}
           </select>
         )}
+        <select value={period} onChange={(event) => setPeriod(event.target.value)} aria-label="Filtrer par date de publication">
+          {PERIODS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+        </select>
         <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Trier">
           <option value="recent">Plus récents</option>
           <option value="oldest">Plus anciens</option>
         </select>
         <span className="board-count">{visible.length} article(s)</span>
+        {hasFilters && (
+          <button type="button" className="ticket-button" onClick={clearFilters}>
+            <X aria-hidden="true" /> Effacer les filtres
+          </button>
+        )}
         {canAddManual && (
           <button type="button" className="ticket-button ticket-button--primary board-add-button" onClick={() => setManualOpen(true)}>
             <Plus aria-hidden="true" /> Ajouter un article
@@ -274,6 +361,12 @@ export default function ArticleBoard({ statuses, toolType, refreshKey = 0, canAd
         onClose={() => setManualOpen(false)}
         onCreate={handleManualCreate}
         defaultStatus={statuses[0] === 'validated' ? 'validated' : 'new'}
+      />
+
+      <TagManagerModal
+        isOpen={isTagManagerOpen}
+        onClose={() => setTagManagerOpen(false)}
+        onChanged={() => setReloadKey((key) => key + 1)}
       />
 
       <ConfirmModal

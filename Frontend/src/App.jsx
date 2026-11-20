@@ -9,6 +9,7 @@ import ValidatedArticles from './pages/ValidatedArticles'
 import Trash from './pages/Trash'
 import AddTool from './pages/AddTool'
 import ToolPage from './pages/ToolPage'
+import Tags from './pages/Tags'
 import { TOOLS, toolPath } from './utils/tools'
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
               <Route path="/veille/nouveaux-articles" element={<NewArticles />} />
               <Route path="/veille/articles-valides" element={<ValidatedArticles />} />
               <Route path="/veille/corbeille" element={<Trash />} />
+              <Route path="/veille/tags" element={<Tags />} />
               {TOOLS.map((tool) => (
                 <Route key={tool.type} path={toolPath(tool)} element={<ToolPage key={tool.type} tool={tool} />} />
               ))}

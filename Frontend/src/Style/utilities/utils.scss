@@ -40,3 +40,38 @@
     color: $red-600;
   }
 }
+
+// Texte lu par les lecteurs d'écran mais invisible à l'écran
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// Serveur injoignable : la page reste ouverte en attendant son retour (VeilleLayout)
+.server-down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-6 $spacing-3;
+  border: 1px dashed var(--border-color);
+  border-radius: $radius-4;
+  color: var(--text-secondary);
+  text-align: center;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: $spacing-2;
+    color: $orange-500;
+  }
+
+  p {
+    color: var(--text-primary);
+    font-weight: $weight-6;
+  }
+}

@@ -181,6 +181,45 @@ def test_tag_rename_and_delete(client):
     assert [t["name"] for t in client.get("/tags").get_json()] == ["b"]
 
 
+def test_tag_usage_per_watch(client, db):
+    theme_id = make_theme(client, "Cyber")
+    other_theme = make_theme(client, "IA")
+    source_id = make_source(client, theme_id)
+    other_source = make_source(client, other_theme)
+    tag_id = client.post("/tags", json={"name": "urgent"}).get_json()["id"]
+    unused_id = client.post("/tags", json={"name": "inutile"}).get_json()["id"]
+    for url, status, source in (("1", "new", source_id), ("2", "validated", source_id), ("3", "validated", source_id), ("4", "new", other_source)):
+        article_id = make_article(db, source, url=f"https://exemple.fr/{url}", status=status)
+        client.post(f"/articles/{article_id}/tags", json={"tag_id": tag_id})
+
+    tags = {tag["id"]: tag for tag in client.get(f"/tags?theme_id={theme_id}").get_json()}
+
+    assert tags[tag_id] == {"id": tag_id, "name": "urgent", "new": 1, "validated": 2, "trash": 0, "total": 4, "other_themes": ["IA"]}
+    assert tags[unused_id]["total"] == 0 and tags[unused_id]["other_themes"] == []
+    # Sans veille : la liste simple, comme avant
+    assert set(client.get("/tags").get_json()[0]) == {"id", "name"}
+
+
+def test_tag_merge(client, db):
+    source_id = make_source(client, make_theme(client))
+    typo = client.post("/tags", json={"name": "cyebr"}).get_json()["id"]
+    good = client.post("/tags", json={"name": "cyber"}).get_json()["id"]
+    both = make_article(db, source_id, url="https://exemple.fr/1")
+    only_typo = make_article(db, source_id, url="https://exemple.fr/2")
+    for article_id, tag_id in ((both, typo), (both, good), (only_typo, typo)):
+        client.post(f"/articles/{article_id}/tags", json={"tag_id": tag_id})
+
+    result = client.post(f"/tags/{typo}/merge", json={"into": good})
+
+    assert result.get_json() == {"id": good, "name": "cyber", "moved": 1}
+    assert [t["name"] for t in client.get("/tags").get_json()] == ["cyber"]
+    tags_by_article = {a["id"]: [t["name"] for t in a["tags"]] for a in client.get("/articles").get_json()}
+    assert tags_by_article == {both: ["cyber"], only_typo: ["cyber"]}
+    assert client.post(f"/tags/{good}/merge", json={"into": good}).status_code == 400
+    assert client.post(f"/tags/{good}/merge", json={"into": 999}).status_code == 404
+    assert client.post(f"/tags/{good}/merge", json={}).status_code == 400
+
+
 # ---------- Dashboard ----------
 
 def test_stats(client, db):

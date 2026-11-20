@@ -4,6 +4,8 @@ import { resetDatabase } from '../api/system'
 import { WatchContext } from './useWatch'
 
 const WATCH_ID_STORAGE_KEY = 'watchId'
+// Serveur injoignable au chargement des veilles : nouvel essai automatique à ce rythme
+const RETRY_DELAY_MS = 5000
 
 export function WatchProvider({ children }) {
   const [watches, setWatches] = useState([])
@@ -11,18 +13,30 @@ export function WatchProvider({ children }) {
   const [watchId, setWatchId] = useState(() => Number(localStorage.getItem(WATCH_ID_STORAGE_KEY)) || null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
 
   // Les "veilles" sont persistées côté backend sous forme de thèmes
   useEffect(() => {
     let cancelled = false
 
     getThemes()
-      .then((themes) => { if (!cancelled) setWatches(themes) })
+      .then((themes) => {
+        if (cancelled) return
+        setWatches(themes)
+        setError(null)
+      })
       .catch((err) => { if (!cancelled) setError(err.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [])
+  }, [attempt])
+
+  // Tant que le serveur ne répond pas, on réessaie : la page se remplit dès qu'il revient
+  useEffect(() => {
+    if (!error) return
+    const timer = setTimeout(() => setAttempt((count) => count + 1), RETRY_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [error, attempt])
 
   useEffect(() => {
     if (watchId) {
@@ -70,7 +84,7 @@ export function WatchProvider({ children }) {
   }
 
   return (
-    <WatchContext.Provider value={{ watchTitle, watches, currentWatch, loading, error, selectWatch, createWatch, setWatchAccent, deleteWatch, resetAllData }}>
+    <WatchContext.Provider value={{ watchId, watchTitle, watches, currentWatch, loading, error, selectWatch, createWatch, setWatchAccent, deleteWatch, resetAllData }}>
       {children}
     </WatchContext.Provider>
   )

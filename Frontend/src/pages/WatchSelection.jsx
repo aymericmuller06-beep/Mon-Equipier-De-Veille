@@ -46,7 +46,7 @@ export default function WatchSelection() {
         {loading ? (
           <p className="watch-selection-status">Chargement des veilles…</p>
         ) : error ? (
-          <p className="watch-selection-status watch-selection-error">Impossible de contacter le serveur : {error}</p>
+          <p className="watch-selection-status watch-selection-error">Impossible de contacter le serveur : {error} Nouvel essai automatique en cours…</p>
         ) : watches.length > 0 ? (
           <ul className="watch-list">
             {watches.map((watch) => (

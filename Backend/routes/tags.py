@@ -13,9 +13,34 @@ logger = logging.getLogger(__name__)
 
 @api.route("/tags", methods=["GET"])
 def get_tags():
+    """Liste des tags. Avec `?theme_id=`, ajoute leur utilisation : nombre d'articles par statut dans cette veille
+    (`new`, `validated`, `trash`), nombre total d'articles toutes veilles confondues (`total`)
+    et noms des autres veilles qui l'utilisent (`other_themes`)."""
     db = get_db()
-    cursor = db.execute("SELECT * FROM tags")
-    return jsonify([dict(row) for row in cursor.fetchall()])
+    tags = [dict(row) for row in db.execute("SELECT * FROM tags ORDER BY name")]
+    theme_id = request.args.get("theme_id", type=int)
+    if not theme_id:
+        return jsonify(tags)
+
+    usage = {tag["id"]: {"new": 0, "validated": 0, "trash": 0, "total": 0, "other_themes": []} for tag in tags}
+    rows = db.execute("""
+        SELECT article_tags.tag_id, sources.theme_id, themes.name AS theme_name, articles.status, COUNT(*) AS n
+        FROM article_tags
+        JOIN articles ON articles.id = article_tags.article_id
+        JOIN sources ON sources.id = articles.source_id
+        JOIN themes ON themes.id = sources.theme_id
+        GROUP BY article_tags.tag_id, sources.theme_id, articles.status
+    """)
+    for row in rows:
+        tag_usage = usage.get(row["tag_id"])
+        if tag_usage is None:
+            continue
+        tag_usage["total"] += row["n"]
+        if row["theme_id"] == theme_id:
+            tag_usage[row["status"]] += row["n"]
+        elif row["theme_name"] not in tag_usage["other_themes"]:
+            tag_usage["other_themes"].append(row["theme_name"])
+    return jsonify([{**tag, **usage[tag["id"]]} for tag in tags])
 
 @api.route("/tags", methods=["POST"])
 def add_tag():
@@ -68,3 +93,29 @@ def delete_tag(tag_id):
         return jsonify({"error": "Tag non trouvé"}), 404
     logger.info(f"✓ Tag {tag_id} supprimé")
     return jsonify({"message": f"Tag {tag_id} supprimé avec succès"}), 200
+
+@api.route("/tags/<int:tag_id>/merge", methods=["POST"])
+def merge_tag(tag_id):
+    """Fusionne un tag dans un autre (`into`) : ses articles reçoivent l'autre tag, puis il est supprimé"""
+    data = request.get_json()
+    target_id = (data or {}).get("into")
+    if not isinstance(target_id, int):
+        return jsonify({"error": "Le champ 'into' (identifiant du tag cible) est requis"}), 400
+    if target_id == tag_id:
+        return jsonify({"error": "Un tag ne peut pas être fusionné avec lui-même"}), 400
+    db = get_db()
+    source = db.execute("SELECT * FROM tags WHERE id = ?", (tag_id,)).fetchone()
+    target = db.execute("SELECT * FROM tags WHERE id = ?", (target_id,)).fetchone()
+    if source is None or target is None:
+        return jsonify({"error": "Tag non trouvé"}), 404
+
+    # Un article qui avait déjà les deux tags ne garde qu'une fois le tag cible
+    moved = db.execute(
+        "INSERT OR IGNORE INTO article_tags (article_id, tag_id) SELECT article_id, ? FROM article_tags WHERE tag_id = ?",
+        (target_id, tag_id),
+    ).rowcount
+    db.execute("DELETE FROM article_tags WHERE tag_id = ?", (tag_id,))
+    db.execute("DELETE FROM tags WHERE id = ?", (tag_id,))
+    db.commit()
+    logger.info(f"✓ Tag '{source['name']}' fusionné dans '{target['name']}' ({moved} article(s) étiqueté(s))")
+    return jsonify({"id": target_id, "name": target["name"], "moved": moved}), 200

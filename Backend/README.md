@@ -35,7 +35,8 @@ Pour ajouter une route, déclarez-la avec `@api.route` dans le fichier de sa res
 | PATCH | `/articles/<id>` | Changer le statut (`new`, `validated`, `trash`) et/ou la note (`status_reason`) |
 | PUT, DELETE | `/articles/<id>` | Modifier ou supprimer un article |
 | DELETE | `/articles/trash?theme_id=` | Vider la corbeille d'une veille (les articles ne seront pas réimportés) |
-| GET, POST | `/tags` | Lister ou créer des tags |
+| GET, POST | `/tags` | Lister ou créer des tags. Avec `?theme_id=`, chaque tag inclut son utilisation : articles par statut dans cette veille (`new`, `validated`, `trash`), `total` toutes veilles confondues et `other_themes` |
+| POST | `/tags/<id>/merge` | Fusionner un tag dans un autre (`{"into": id}`) : ses articles reçoivent l'autre tag, puis il est supprimé |
 | PUT, DELETE | `/tags/<id>` | Modifier ou supprimer un tag |
 | GET, POST | `/articles/<id>/tags` | Lire ou associer les tags d'un article |
 | DELETE | `/articles/<id>/tags/<tag_id>` | Retirer un tag d'un article |

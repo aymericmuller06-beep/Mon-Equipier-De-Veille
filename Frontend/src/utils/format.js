@@ -42,3 +42,8 @@ export function formatAgo(value) {
   if (days < 30) return `il y a ${days} j`
   return `le ${date.toLocaleDateString('fr-FR')}`
 }
+
+// Minuscules sans accents, pour chercher « securite » dans « Sécurité » (comme la recherche du serveur)
+export function normalizeText(value) {
+  return (value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
