@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MessageSquareText } from 'lucide-react'
 import ToolIcon from './ToolIcon'
-import { STATUS_LABELS, formatDate, formatRelative } from '../utils/format'
+import { STATUS_LABELS, formatDate, formatPurge, formatRelative } from '../utils/format'
 
 const DECISION_LABELS = { validated: 'Validé', trash: 'Refusé' }
 
@@ -54,6 +54,11 @@ export default function ArticleTicket({ article, allTags, onDecide, onEditNote, 
           {article.created_at && <span>Collecté {formatRelative(article.created_at)}</span>}
           {article.status !== 'new' && article.status_changed_at && (
             <span>{DECISION_LABELS[article.status]} {formatRelative(article.status_changed_at)}</span>
+          )}
+          {article.purge_at && (
+            <span title={`Suppression automatique le ${formatDate(article.purge_at)}`}>
+              {formatPurge(article.purge_at)}
+            </span>
           )}
         </p>
 
