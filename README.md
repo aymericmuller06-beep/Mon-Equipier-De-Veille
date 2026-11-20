@@ -39,6 +39,21 @@ npm run dev
 
 L'interface est sur <http://localhost:5173>.
 
+## Tests
+
+Backend, depuis `Backend/` (avec le venv activé) :
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Les tests utilisent une base jetable et n'accèdent jamais à Internet : les flux et les sites sont simulés.
+
+Frontend, depuis `Frontend/` : `npm run lint` et `npm run build`.
+
+La CI GitHub (`.github/workflows/ci.yml`) lance tout cela à chaque push sur `main` et à chaque pull request.
+
 ## Configuration du backend
 
 | Variable | Par défaut | Rôle |

@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 venv/
 data/
+tests/
+requirements-dev.txt
+.pytest_cache/

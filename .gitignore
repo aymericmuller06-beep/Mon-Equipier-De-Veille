@@ -1,6 +1,7 @@
 # Python
 venv/
 __pycache__/
+.pytest_cache/
 *.pyc
 
 # Base de données (pour ne pas pousser tes données de test sur GitHub), fichiers WAL et sauvegardes

@@ -4,6 +4,20 @@ API Flask + SQLite. Le lancement et la configuration sont décrits dans le [READ
 
 Dans l'API, une « veille » s'appelle un **thème**.
 
+## Organisation du code
+
+| Fichier | Rôle |
+|---|---|
+| `main.py` | Création de l'application (`create_app`) et lancement des tâches de fond |
+| `database.py` | Connexion SQLite et migrations versionnées (`MIGRATIONS`) |
+| `routes/` | Routes de l'API, un fichier par ressource : `themes`, `sources`, `articles` (et leurs tags), `tags`, `stats`, `tools`, `system`. Validations communes dans `routes/common.py` |
+| `sync.py` | Synchronisation des sources (filtres, dédoublonnage, état, espacement Reddit) |
+| `maintenance.py` | Purge de la corbeille et sauvegardes |
+| `rss.py`, `web.py` | Lecture des flux et des pages web (titre d'une page, flux d'un site ou d'une chaîne YouTube) |
+| `tests/` | Tests pytest (voir le README principal) |
+
+Pour ajouter une route, déclarez-la avec `@api.route` dans le fichier de sa ressource. Pour une nouvelle ressource, créez le fichier dans `routes/` et ajoutez-le à l'import de `routes/__init__.py`.
+
 ## Endpoints
 
 | Méthodes | URL | Action |
