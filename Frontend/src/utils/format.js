@@ -27,3 +27,18 @@ export function formatPurge(value) {
   if (days === 1) return 'Supprimé définitivement demain'
   return `Supprimé définitivement dans ${days} j`
 }
+
+// Durée écoulée précise (« il y a 5 min », « il y a 3 h », « il y a 2 j »), pour les synchronisations
+export function formatAgo(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60000)
+  if (minutes < 1) return "à l'instant"
+  if (minutes < 60) return `il y a ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `il y a ${hours} h`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `il y a ${days} j`
+  return `le ${date.toLocaleDateString('fr-FR')}`
+}

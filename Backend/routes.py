@@ -6,9 +6,9 @@ from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
 from maintenance import delete_articles_permanently, purge_at
-from sync import keyword_filter, sync_source as run_source_sync
+from sync import describe_sync_error, keyword_filter, sync_source as run_source_sync
 from text import normalize
-from web import RateLimitedError, fetch_page_title, resolve_youtube_feed
+from web import RateLimitedError, fetch_page_title, resolve_rss_feed, resolve_youtube_feed
 
 logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
@@ -195,13 +195,19 @@ def delete_theme(theme_id):
     return jsonify({"message": f"Thème {theme_id} supprimé avec succès"}), 200
 
 # ==================== SOURCES ====================
+# last_article_at : date du dernier article importé (un flux qui ne publie plus rien reste « en bonne santé »)
+SOURCE_SELECT = """
+    SELECT sources.*, (SELECT MAX(created_at) FROM articles WHERE articles.source_id = sources.id) AS last_article_at
+    FROM sources
+"""
+
 @api.route("/sources", methods=["GET"])
 def get_sources():
     db = get_db()
     theme_id = request.args.get("theme_id")
     tool_type = request.args.get("tool_type")
 
-    query = "SELECT * FROM sources"
+    query = SOURCE_SELECT
     conditions = []
     params = []
     if theme_id:
@@ -219,7 +225,7 @@ def get_sources():
 @api.route("/sources/<int:source_id>", methods=["GET"])
 def get_source(source_id):
     db = get_db()
-    source = db.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone()
+    source = db.execute(SOURCE_SELECT + " WHERE sources.id = ?", (source_id,)).fetchone()
     if source is None:
         return jsonify({"error": "Source non trouvée"}), 404
     return jsonify(dict(source))
@@ -342,7 +348,7 @@ def patch_source(source_id):
 
     db.commit()
     logger.info(f"✓ Source {source_id} modifiée ({trashed} article(s) écarté(s) par les filtres)")
-    updated = dict(db.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone())
+    updated = dict(db.execute(SOURCE_SELECT + " WHERE sources.id = ?", (source_id,)).fetchone())
     return jsonify({**updated, "trashed": trashed}), 200
 
 @api.route("/sources/<int:source_id>/sync", methods=["POST"])
@@ -362,7 +368,7 @@ def sync_source(source_id):
         return jsonify({"error": f"{e.host} limite le nombre de requêtes : réessayez dans {e.retry_after} s (la synchronisation automatique s'en chargera sinon)."}), 429
     except Exception as e:
         logger.warning(f"✗ Erreur de lecture du flux RSS pour la source {source_id}: {str(e)}")
-        return jsonify({"error": "Impossible de lire ce flux RSS. Vérifiez l'URL."}), 502
+        return jsonify({"error": f"{describe_sync_error(e)}."}), 502
     return jsonify(result), 200
 
 @api.route("/sources/<int:source_id>", methods=["DELETE"])
@@ -800,6 +806,22 @@ def resolve_youtube():
         logger.warning(f"✗ Résolution YouTube impossible pour '{url}': {e}")
         return jsonify({"error": "Impossible de joindre YouTube. Vérifiez le lien et réessayez."}), 502
     return jsonify({"feed_url": feed_url, "name": name})
+
+@api.route("/tools/rss/resolve", methods=["POST"])
+def resolve_rss():
+    """Trouve le flux RSS d'un site à partir de l'adresse du site ou du flux lui-même"""
+    data = request.get_json()
+    url = (data or {}).get("url", "").strip()
+    if not url:
+        return jsonify({"error": "Le champ 'url' est requis"}), 400
+    try:
+        feed_url, name = resolve_rss_feed(url)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.warning(f"✗ Recherche de flux RSS impossible pour '{url}': {e}")
+        return jsonify({"error": f"{describe_sync_error(e)}. Vérifiez l'adresse et réessayez."}), 502
+    return jsonify({"feed_url": feed_url, "name": name[:150]})
 
 # ==================== SYSTEME ====================
 @api.route("/system/reset", methods=["POST"])

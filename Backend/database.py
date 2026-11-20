@@ -146,11 +146,21 @@ def migration_2_trash_dates(db):
     """, (datetime.now(timezone.utc).isoformat(),))
 
 
+def migration_3_source_sync_status(db):
+    """État de la dernière synchronisation de chaque source : date de la dernière tentative, de la dernière réussite,
+    message de la dernière erreur et date de la première erreur d'affilée (les deux à NULL après une réussite)"""
+    columns = [row["name"] for row in db.execute("PRAGMA table_info(sources)").fetchall()]
+    for column in ("last_sync_at", "last_success_at", "last_error", "error_since"):
+        if column not in columns:
+            db.execute(f"ALTER TABLE sources ADD COLUMN {column} TEXT")
+
+
 # Ajouter une migration = ajouter une fonction à la fin de cette liste, sans jamais modifier ni réordonner les précédentes.
 # Le numéro de version de la base (PRAGMA user_version) indique les migrations déjà appliquées.
 MIGRATIONS = [
     migration_1_initial_schema,
     migration_2_trash_dates,
+    migration_3_source_sync_status,
 ]
 
 

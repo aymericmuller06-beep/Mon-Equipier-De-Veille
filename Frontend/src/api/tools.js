@@ -7,3 +7,11 @@ export function resolveYouTube(url) {
     body: JSON.stringify({ url }),
   })
 }
+
+// Renvoie { feed_url, name } pour l'adresse d'un site ou d'un flux RSS/Atom
+export function resolveRss(url) {
+  return apiFetch('/tools/rss/resolve', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
+}

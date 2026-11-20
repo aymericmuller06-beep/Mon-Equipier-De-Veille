@@ -2,7 +2,8 @@ import html
 import re
 import urllib.error
 import urllib.request
-from urllib.parse import parse_qs, urlparse
+from html.parser import HTMLParser
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import feedparser
 
@@ -42,14 +43,16 @@ def read_retry_after(error):
     return 60
 
 
-def fetch(url, max_bytes, headers=None):
-    """Télécharge une URL http(s) avec délai et taille maximale ; renvoie les octets lus"""
+def fetch(url, max_bytes, headers=None, with_final_url=False):
+    """Télécharge une URL http(s) avec délai et taille maximale ; renvoie les octets lus
+    (et l'adresse finale après redirections si `with_final_url`)"""
     if urlparse(url).scheme not in ("http", "https"):
         raise ValueError("Seules les URL http(s) sont acceptées")
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
     try:
         with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
-            return response.read(max_bytes)
+            content = response.read(max_bytes)
+            return (content, response.geturl()) if with_final_url else content
     except urllib.error.HTTPError as e:
         if e.code == 429:
             raise RateLimitedError(urlparse(url).netloc, read_retry_after(e)) from e
@@ -111,3 +114,76 @@ def resolve_youtube_feed(url):
     if feed.bozo and not feed.entries and not feed.feed.get("title"):
         raise ValueError("YouTube ne fournit pas de flux pour ce lien (playlist privée ou chaîne introuvable).")
     return feed_url, feed.feed.get("title") or "YouTube"
+
+
+FEED_TYPES = {"application/rss+xml", "application/atom+xml", "application/feed+json", "application/xml", "text/xml"}
+# Adresses de flux les plus courantes (WordPress, Ghost, Hugo, Jekyll…), essayées si la page n'en annonce aucun
+COMMON_FEED_PATHS = ("/feed/", "/feed", "/rss", "/rss.xml", "/feed.xml", "/atom.xml", "/index.xml")
+
+
+class FeedLinkParser(HTMLParser):
+    """Relève les flux annoncés dans une page : <link rel="alternate" type="application/rss+xml" href="…">"""
+
+    def __init__(self):
+        super().__init__()
+        self.feeds = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "link":
+            return
+        attributes = {name: (value or "") for name, value in attrs}
+        rel = attributes.get("rel", "").lower().split()
+        feed_type = attributes.get("type", "").lower().split(";")[0].strip()
+        if "alternate" in rel and feed_type in FEED_TYPES and attributes.get("href"):
+            self.feeds.append(attributes["href"])
+
+
+def read_feed(url):
+    """Renvoie le titre du flux si `url` est un flux RSS/Atom lisible, sinon None"""
+    try:
+        feed = feedparser.parse(fetch(url, MAX_PAGE_BYTES * 2))
+    except Exception:
+        return None
+    if feed.entries or (feed.feed.get("title") and not feed.bozo):
+        return feed.feed.get("title") or urlparse(url).netloc
+    return None
+
+
+def resolve_rss_feed(url):
+    """Trouve le flux RSS d'un site : l'adresse donnée si c'est déjà un flux, sinon le flux annoncé
+    par la page, sinon une adresse de flux courante. Renvoie (url_du_flux, nom)."""
+    url = url.strip()
+    if "://" not in url:
+        url = f"https://{url}"
+    if urlparse(url).scheme not in ("http", "https") or not urlparse(url).netloc:
+        raise ValueError("Adresse invalide. Exemple : https://www.exemple.fr")
+
+    # Après redirections : un site qui a changé de domaine est cherché à sa nouvelle adresse
+    content, url = fetch(url, MAX_PAGE_BYTES * 2, with_final_url=True)
+
+    # 1. L'adresse est déjà un flux
+    feed = feedparser.parse(content)
+    if feed.entries or (feed.feed.get("title") and not feed.bozo):
+        return url, feed.feed.get("title") or urlparse(url).netloc
+
+    # 2. Le flux annoncé dans la page
+    page = content.decode("utf-8", errors="replace")
+    parser = FeedLinkParser()
+    try:
+        parser.feed(page)
+    except Exception:
+        pass
+    for href in parser.feeds:
+        feed_url = urljoin(url, html.unescape(href))
+        title = read_feed(feed_url)
+        if title:
+            return feed_url, title
+
+    # 3. Les adresses de flux habituelles, à la racine du site
+    root = f"{urlparse(url).scheme}://{urlparse(url).netloc}"
+    for path in COMMON_FEED_PATHS:
+        title = read_feed(root + path)
+        if title:
+            return root + path, title
+
+    raise ValueError("Aucun flux RSS trouvé sur ce site. Cherchez un lien « RSS » ou « Flux » sur le site, et collez directement son adresse.")

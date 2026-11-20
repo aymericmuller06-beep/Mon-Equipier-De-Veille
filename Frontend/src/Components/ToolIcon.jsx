@@ -3,6 +3,7 @@ import GoogleLogo from './GoogleLogo'
 import GoogleNewsLogo from './GoogleNewsLogo'
 import YouTubeLogo from './YouTubeLogo'
 import RedditLogo from './RedditLogo'
+import RssLogo from './RssLogo'
 
 // Icône d'un type d'outil (tool_type d'une source)
 export default function ToolIcon({ type, size = 16, className = '' }) {
@@ -15,6 +16,8 @@ export default function ToolIcon({ type, size = 16, className = '' }) {
       return <YouTubeLogo size={size} className={className} />
     case 'reddit':
       return <RedditLogo size={size} className={className} />
+    case 'rss':
+      return <RssLogo size={size} className={className} />
     case 'manual':
       return <PenLine size={size} className={`tool-icon ${className}`} aria-hidden="true" />
     default:

@@ -1,6 +1,6 @@
 # Mon équipier de veille
 
-Application de veille : créez des espaces de veille, branchez-y des Google Alerts, puis triez les articles collectés. Chaque article est un ticket que l'on valide ou refuse, avec des tags et une note pour garder la raison du choix. Le dashboard résume la veille en un coup d'œil.
+Application de veille : créez des espaces de veille, branchez-y des sources (Google Alerts, Google News, YouTube, Reddit, n'importe quel flux RSS), puis triez les articles collectés. Chaque article est un ticket que l'on valide ou refuse, avec des tags et une note pour garder la raison du choix. Le dashboard résume la veille en un coup d'œil.
 
 - **Frontend** : React + Vite ([Frontend/](Frontend/README.md))
 - **Backend** : API Flask + SQLite ([Backend/](Backend/README.md))
@@ -44,6 +44,7 @@ L'interface est sur <http://localhost:5173>.
 | Variable | Par défaut | Rôle |
 |---|---|---|
 | `SYNC_INTERVAL_MINUTES` | `60` | Fréquence de synchronisation automatique des sources (`0` pour désactiver) |
+| `REDDIT_MIN_INTERVAL_SECONDS` | `60` | Délai entre deux requêtes vers Reddit pendant la synchro automatique (Reddit refuse les requêtes trop rapprochées) |
 | `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Adresses autorisées à appeler l'API depuis un navigateur |
 | `DATABASE_PATH` | `data/veille.db` | Emplacement de la base SQLite |
 | `TRASH_RETENTION_DAYS` | `30` | Jours avant qu'un article de la corbeille soit supprimé définitivement (`0` pour désactiver) |

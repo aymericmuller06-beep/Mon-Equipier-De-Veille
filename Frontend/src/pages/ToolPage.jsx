@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Plus, SlidersHorizontal } from 'lucide-react'
+import { AlertTriangle, Plus, SlidersHorizontal } from 'lucide-react'
 import VeilleLayout from '../Components/VeilleLayout'
 import ArticleBoard from '../Components/ArticleBoard'
 import ToolIcon from '../Components/ToolIcon'
 import SourceSettingsModal from '../Components/SourceSettingsModal'
 import { useWatch } from '../Context/useWatch'
 import { createSourceAndSync, getSources, syncSource, updateSource } from '../api/sources'
-import { formatSyncResult } from '../utils/tools'
+import { formatSyncResult, sourceHealth } from '../utils/tools'
 
 // Page d'un outil à flux (Google Alerts, Google News, YouTube…) : ses flux, leur synchro et leurs articles
 export default function ToolPage({ tool }) {
@@ -35,29 +35,39 @@ export default function ToolPage({ tool }) {
     return () => { cancelled = true }
   }, [currentWatch, tool.type])
 
+  // Après une synchro : recharge les sources pour afficher leur nouvel état (réussite, erreur)
+  const reloadSources = async () => {
+    try {
+      setSources(await getSources(currentWatch.id, tool.type))
+    } catch {
+      // L'état affiché sera simplement un peu ancien
+    }
+  }
+
   // Synchronise tous les flux de l'outil d'un coup, puis recharge les tickets
   const handleSyncAll = async () => {
     setSyncing(true)
     setSyncError('')
     setSyncMessage('')
     let inserted = 0
-    const failed = []
+    let failed = 0
     for (const source of sources) {
       try {
         inserted += (await syncSource(source.id)).inserted
-      } catch (err) {
-        failed.push(`« ${source.name} » : ${err.message}`)
+      } catch {
+        // Le détail de l'erreur s'affiche dans l'encart d'état des flux, rechargé juste après
+        failed += 1
       }
     }
-    setSyncMessage(`${inserted} nouvel(s) article(s) importé(s).`)
-    if (failed.length > 0) setSyncError(failed.join(' — '))
+    setSyncMessage(`${inserted} nouvel(s) article(s) importé(s)${failed ? `, ${failed} flux en erreur (détails ci-dessus)` : ''}.`)
     setRefreshKey((key) => key + 1)
+    await reloadSources()
     setSyncing(false)
   }
 
   const handleCreate = async (name, url, filters) => {
     const { source, syncResult, syncError: newSyncError } = await createSourceAndSync(name, url, currentWatch.id, tool.type, filters)
-    setSources((current) => [...current, source])
+    await reloadSources()
     setSyncMessage(syncResult ? `« ${source.name} » ajouté : ${formatSyncResult(syncResult)}` : '')
     setSyncError(newSyncError)
     setRefreshKey((key) => key + 1)
@@ -74,6 +84,8 @@ export default function ToolPage({ tool }) {
   }
 
   const { Modal } = tool
+  const healths = new Map(sources.map((source) => [source.id, sourceHealth(source)]))
+  const failing = sources.filter((source) => ['warning', 'error'].includes(healths.get(source.id).level))
 
   return (
     <VeilleLayout>
@@ -90,19 +102,28 @@ export default function ToolPage({ tool }) {
         <>
           <div className="alerts-bar">
             <ul className="alerts-list" aria-label={tool.feedsLabel}>
-              {sources.map((source) => (
-                <li key={source.id} className={source.include_keywords || source.exclude_keywords ? 'is-filtered' : ''}>
-                  <a href={source.url} target="_blank" rel="noreferrer" title="Ouvrir le flux RSS">{source.name}</a>
-                  <button
-                    type="button"
-                    onClick={() => setEditedSource(source)}
-                    aria-label={`Réglages et filtres de « ${source.name} »`}
-                    title={source.include_keywords || source.exclude_keywords ? 'Filtres actifs — modifier' : 'Réglages et filtres'}
-                  >
-                    <SlidersHorizontal aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
+              {sources.map((source) => {
+                const health = healths.get(source.id)
+                return (
+                  <li key={source.id} className={source.include_keywords || source.exclude_keywords ? 'is-filtered' : ''}>
+                    <span
+                      className={`source-health source-health--${health.level}`}
+                      title={`${health.label} — ${health.detail}`}
+                      role="img"
+                      aria-label={`${health.label} : ${health.detail}`}
+                    />
+                    <a href={source.url} target="_blank" rel="noreferrer" title="Ouvrir le flux RSS">{source.name}</a>
+                    <button
+                      type="button"
+                      onClick={() => setEditedSource(source)}
+                      aria-label={`Réglages et filtres de « ${source.name} »`}
+                      title={source.include_keywords || source.exclude_keywords ? 'Filtres actifs — modifier' : 'Réglages et filtres'}
+                    >
+                      <SlidersHorizontal aria-hidden="true" />
+                    </button>
+                  </li>
+                )
+              })}
               <li className="alerts-list-add">
                 <button type="button" onClick={() => setAddOpen(true)}>
                   <Plus aria-hidden="true" /> {tool.addLabel}
@@ -113,6 +134,17 @@ export default function ToolPage({ tool }) {
               {syncing ? 'Synchronisation…' : 'Tout synchroniser'}
             </button>
           </div>
+          {failing.length > 0 && (
+            <div className="source-health-alert" role="status">
+              <AlertTriangle aria-hidden="true" />
+              <ul>
+                {failing.map((source) => {
+                  const health = healths.get(source.id)
+                  return <li key={source.id}><strong>« {source.name} » — {health.label.toLowerCase()} :</strong> {health.detail}</li>
+                })}
+              </ul>
+            </div>
+          )}
           {syncError && <p className="watch-selection-error">{syncError}</p>}
           {syncMessage && <p className="add-tool-sync-message">{syncMessage}</p>}
 
