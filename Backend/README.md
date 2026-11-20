@@ -13,7 +13,7 @@ Dans l'API, une « veille » s'appelle un **thème**.
 | GET, POST | `/sources` | Lister (`?theme_id=`, `?tool_type=`) ou créer des sources |
 | GET, PUT, DELETE | `/sources/<id>` | Lire, modifier ou supprimer une source |
 | POST | `/sources/<id>/sync` | Importer les nouveaux articles du flux |
-| GET, POST | `/articles` | Lister (`?theme_id=`, `?status=`, `?source_id=`, `?tool_type=`, `?limit=`, `?sort=decision`) ou créer des articles. Chaque article inclut `source_name` et `tags` |
+| GET, POST | `/articles` | Lister (`?theme_id=`, `?status=`, `?source_id=`, `?tool_type=`, `?limit=`, `?sort=decision`) ou créer des articles. Chaque article inclut `source_name`, `tags` et `purge_at` (date de suppression automatique s'il est dans la corbeille, sinon `null`) |
 | PATCH | `/articles/<id>` | Changer le statut (`new`, `validated`, `trash`) et/ou la note (`status_reason`) |
 | PUT, DELETE | `/articles/<id>` | Modifier ou supprimer un article |
 | DELETE | `/articles/trash?theme_id=` | Vider la corbeille d'une veille (les articles ne seront pas réimportés) |

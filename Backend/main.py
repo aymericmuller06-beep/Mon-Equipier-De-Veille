@@ -7,6 +7,7 @@ from flask_cors import CORS
 from database import init_db, close_connection
 from routes import api
 from sync import start_scheduler
+from maintenance import start_maintenance
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,9 +28,11 @@ app.teardown_appcontext(close_connection)
 
 init_db(app)
 
-# En mode debug, le reloader lance deux processus : on ne démarre la tâche que dans le processus enfant
-if SYNC_INTERVAL_MINUTES > 0 and (not DEBUG or os.environ.get("WERKZEUG_RUN_MAIN") == "true"):
-    start_scheduler(app, SYNC_INTERVAL_MINUTES)
+# En mode debug, le reloader lance deux processus : on ne démarre les tâches de fond que dans le processus enfant
+if not DEBUG or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+    if SYNC_INTERVAL_MINUTES > 0:
+        start_scheduler(app, SYNC_INTERVAL_MINUTES)
+    start_maintenance(app)
 
 if __name__ == "__main__":
     app.run(host=os.environ.get("HOST", "127.0.0.1"), port=8000, debug=DEBUG)

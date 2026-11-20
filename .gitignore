@@ -3,8 +3,12 @@ venv/
 __pycache__/
 *.pyc
 
-# Base de données (pour ne pas pousser tes données de test sur GitHub)
+# Base de données (pour ne pas pousser tes données de test sur GitHub), fichiers WAL et sauvegardes
 *.db
+*.db-wal
+*.db-shm
+*.db.tmp
+data/
 
 # Node.js
 node_modules/

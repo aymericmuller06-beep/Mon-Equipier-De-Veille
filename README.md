@@ -14,7 +14,7 @@ docker compose up --build -d
 - Interface : <http://localhost:3000>
 - API : <http://localhost:8000>
 
-Arrêter : `docker compose down`. Les données sont conservées dans `data/veille.db`.
+Arrêter : `docker compose down`. Les données sont conservées dans `data/veille.db` (avec ses fichiers `veille.db-wal` et `veille.db-shm`), et les sauvegardes dans `data/backups/`.
 
 Le frontend Docker est une version compilée : après une modification du code, reconstruisez-le avec `docker compose up --build -d frontend`. Pour un rechargement automatique pendant le développement, gardez le backend dans Docker et lancez le frontend avec `npm run dev` (voir ci-dessous).
 
@@ -46,6 +46,32 @@ L'interface est sur <http://localhost:5173>.
 | `SYNC_INTERVAL_MINUTES` | `60` | Fréquence de synchronisation automatique des sources (`0` pour désactiver) |
 | `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Adresses autorisées à appeler l'API depuis un navigateur |
 | `DATABASE_PATH` | `data/veille.db` | Emplacement de la base SQLite |
+| `TRASH_RETENTION_DAYS` | `30` | Jours avant qu'un article de la corbeille soit supprimé définitivement (`0` pour désactiver) |
+| `BACKUP_INTERVAL_HOURS` | `24` | Fréquence des sauvegardes automatiques de la base (`0` pour désactiver) |
+| `BACKUP_KEEP` | `7` | Nombre de sauvegardes conservées (les plus anciennes sont supprimées) |
+| `BACKUP_DIR` | `data/backups` | Dossier des sauvegardes (à côté de la base par défaut) |
 | `FLASK_DEBUG` | désactivé | `1` pour le mode debug (uniquement en local) |
 
 Côté frontend, l'adresse de l'API se règle avec `VITE_API_URL` (voir `Frontend/.env.example`).
+
+## Maintenance automatique
+
+Au démarrage puis toutes les heures, le backend :
+
+- supprime les articles restés dans la corbeille plus de `TRASH_RETENTION_DAYS` jours (comme « Vider la corbeille », ils ne seront pas réimportés) ;
+- sauvegarde la base si la dernière sauvegarde date de plus de `BACKUP_INTERVAL_HOURS` heures. Les fichiers s'appellent `veille-AAAAMMJJ-HHMMSS.db` (heure UTC).
+
+Les sauvegardes restent sur la même machine que la base : pensez à les copier ailleurs régulièrement.
+
+### Restaurer une sauvegarde
+
+```bash
+docker compose stop backend
+cp data/backups/veille-AAAAMMJJ-HHMMSS.db data/veille.db
+rm -f data/veille.db-wal data/veille.db-shm   # indispensable : ces fichiers appartiennent à l'ancienne base
+docker compose start backend
+```
+
+## Évolutions de la base
+
+Le schéma est versionné (`PRAGMA user_version`). Pour le faire évoluer, ajoutez une fonction à la fin de la liste `MIGRATIONS` dans `Backend/database.py`. Elle s'appliquera une seule fois, au prochain démarrage. Ne modifiez jamais une migration déjà livrée.

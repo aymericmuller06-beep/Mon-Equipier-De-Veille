@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from flask import Blueprint, jsonify, request
 from database import get_db
+from maintenance import delete_articles_permanently, purge_at
 from sync import keyword_filter, sync_source as run_source_sync
 from text import normalize
 from web import RateLimitedError, fetch_page_title, resolve_youtube_feed
@@ -91,6 +92,8 @@ def attach_tags(db, articles):
             tags_by_article[row["article_id"]].append({"id": row["id"], "name": row["name"]})
     for article in articles:
         article["tags"] = tags_by_article[article["id"]]
+        # Corbeille : date de suppression automatique (None pour les autres statuts)
+        article["purge_at"] = purge_at(article)
     return articles
 
 def get_full_article(db, article_id):
@@ -447,12 +450,12 @@ def empty_trash():
     if not theme_id:
         return jsonify({"error": "Le paramètre 'theme_id' est requis"}), 400
     db = get_db()
-    in_trash = "status = 'trash' AND source_id IN (SELECT id FROM sources WHERE theme_id = ?)"
-    db.execute(f"INSERT OR IGNORE INTO dismissed_articles (source_id, url) SELECT source_id, url FROM articles WHERE {in_trash}", (theme_id,))
-    cursor = db.execute(f"DELETE FROM articles WHERE {in_trash}", (theme_id,))
+    deleted = delete_articles_permanently(
+        db, "status = 'trash' AND source_id IN (SELECT id FROM sources WHERE theme_id = ?)", (theme_id,)
+    )
     db.commit()
-    logger.info(f"✓ Corbeille de la veille {theme_id} vidée ({cursor.rowcount} article(s))")
-    return jsonify({"deleted": cursor.rowcount}), 200
+    logger.info(f"✓ Corbeille de la veille {theme_id} vidée ({deleted} article(s))")
+    return jsonify({"deleted": deleted}), 200
 
 @api.route("/articles/<int:article_id>/status", methods=["PATCH"])
 def update_article_status(article_id):
